@@ -1,8 +1,10 @@
 # Interactive-ASM-Cheats-Updater
+
 ![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.9+-blue.svg) ![BuildTag](https://img.shields.io/badge/build-passing-success.svg)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/main/program_capture.png)
 
 ## Table of Contents
 - [Functions](#functions)
@@ -18,6 +20,8 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 
 ## Functions
+
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/main/program_icon.jpg)
 
 Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Update game cheats to other locales (if they don't rewrite the game code, then yes)
