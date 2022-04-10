@@ -1,6 +1,6 @@
 # Interactive-ASM-Cheats-Updater
 
-![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.9+-blue.svg) ![BuildTag](https://img.shields.io/badge/build-passing-success.svg)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
+![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.9+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
