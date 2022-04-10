@@ -14,6 +14,7 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 - [Trouble Shooting](#trouble-shooting)
 - [Contribution](#contribution)
 - [Credits](#credits)
+- [License](#license)
 
 
 ## Functions
@@ -100,3 +101,16 @@ Under construction after a stable release with original codes.
 a.) [Keystone Engine](https://github.com/keystone-engine/keystone) and [Capstone Engine](https://github.com/capstone-engine/capstone): Without their brilliant work, Interactive ASM Cheats Updater will never be born.
 
 b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a lot on transforming nso files, made by 0CBH0.
+
+**Also thanks to:**
+
+[Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html) for their testing.
+
+All cheat makers that sparing no effort in writing and updating cheat codes, you ARE the true hero!
+
+All the helpers for bringing this project to life!
+
+
+## License
+
+This project is licensed under GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details
