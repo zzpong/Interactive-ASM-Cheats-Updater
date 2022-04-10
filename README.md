@@ -39,6 +39,8 @@ TODO:
 
 ## Quick Start Guide
 
+If you need a Chinese version introduction, please refer [here](https://www.91tvg.com/thread-293794-1-1.html). 中文版请参考[此帖](https://www.91tvg.com/thread-293794-1-1.html)。
+
 ### Pre-Requisites
 
 * Better windows platform, mac/linux not tested
