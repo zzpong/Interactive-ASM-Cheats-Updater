@@ -11,6 +11,9 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
   	- [Downloading](#downloading)
   	- [Usage](#usage)
 - [Building from Source](#building-from-source)
+- [Trouble Shooting](#trouble-shooting)
+- [Contribution](#contribution)
+- [Credits](#credits)
 
 
 ## Functions
@@ -53,7 +56,7 @@ Build ID of the old main file will be shown after loading. Please make sure it i
 #### Interactively updating the cheat codes
 Logs window has everything you need when updating cheat codes.
 * **Generate**: Generate one code or title
-* **Skip**: Skip one code or title, especially for pointer cheats. You can update pointer cheats with [EdiZon SE](https://github.com/tomvita/EdiZon-SE).
+* **Skip**: Skip one code or title, especially for pointer cheats.
 * **Undo**: Undo the last operation.
 * **Restart**: Restart the whole process.
 * **Wing Length**: Decide how many asm code lines are extracted as code features before and after the target address. Supported input type like array [left_side, right_side] and integer "single_input" are listed below:
@@ -65,6 +68,7 @@ Logs window has everything you need when updating cheat codes.
 | Branch with target address | wing length for bl address | wing length for bl target address | :x: | 
 
 * **Regenerate**: Useful when logs window show "address not found". Please change wing length and regenerate until single hit, or maybe double.
+* **Debug**: Generate a debug folder with procedure files to show you what happend during the whole progress.
 
 #### Save cheat codes with "SaveCHT" button
 
@@ -72,3 +76,27 @@ Logs window has everything you need when updating cheat codes.
 ## Building from Source
 
 Under construction after a stable release with original codes.
+
+
+## Trouble Shooting
+1. Why my new codes doesn't work?
+  
+    A: On most cases, they are pointer cheat codes that can be recognized from the logs window. Please update these cheats with [EdiZon SE](https://github.com/tomvita/EdiZon-SE).
+
+2. Why my new codes break the game?
+
+    A: Game developer will make a huge change for some specific version of games, like adding new function or improving code efficiency. In these cases, the ASM cheat codes need to be refind. 
+
+
+## Contribution
+
+Under construction after a stable release with original codes.
+
+
+## Credits
+
+**Interactive ASM Cheats Updater** is based on
+
+a.) [Keystone Engine](https://github.com/keystone-engine/keystone) and [Capstone Engine](https://github.com/capstone-engine/capstone): Without their brilliant work, Interactive ASM Cheats Updater will never be born.
+
+b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a lot on transforming nso files, made by 0CBH0.
