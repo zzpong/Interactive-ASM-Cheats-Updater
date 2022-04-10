@@ -104,13 +104,13 @@ b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a l
 
 **Also thanks to:**
 
-[Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html) for their testing.
+[Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html) and [Geminize](https://www.91tvg.com/space-uid-2337434.html) for their testing.
 
-All cheat makers that sparing no effort in writing and updating cheat codes, you ARE the true hero!
+All cheat makers that sparing no effort in writing and updating cheat codes, you ARE the true heros!
 
 All the helpers for bringing this project to life!
 
 
 ## License
 
-This project is licensed under GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details
+This project is licensed under GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
