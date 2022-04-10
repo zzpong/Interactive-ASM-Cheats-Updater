@@ -16,6 +16,7 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 ## Functions
 
 Now supports (same logic with cheats makers updating their codes like AOB):
+- [x] Update game cheats to other locales (if they don't rewrite the game code, then yes)
 - [x] Search the whole main file for code features
 - [x] Update normal ASM codes
 - [x] Update code cave codes
@@ -24,6 +25,7 @@ Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Auto fill cheat bids when saving .txt file
 
 TODO:
+- [ ] Save modified .NSO file base on cheats
 - [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
 
 
@@ -49,8 +51,22 @@ There are lots of excellent works for you to dump the main file, like [hactool](
 Build ID of the old main file will be shown after loading. Please make sure it is the same with the old cheat.
 
 #### Interactively updating the cheat codes
+Logs window has everything you need when updating cheat codes.
+* **Generate**: Generate one code or title
+* **Skip**: Skip one code or title, especially for pointer cheats. You can update pointer cheats with [EdiZon SE](https://github.com/tomvita/EdiZon-SE).
+* **Undo**: Undo the last operation.
+* **Restart**: Restart the whole process.
+* **Wing Length**: Decide how many asm code lines are extracted as code features before and after the target address. Supported input type like array [left_side, right_side] and integer "single_input" are listed below:
 
-#### Save cheat codes with "SavCHT" button
+|  Type  |  Left Side  |  Right Side  |  Support Single Input  |
+| :------------------: | :------------------: | :------------------: | :------------------: |
+| Normal ASM code | feature lines before ASM address | feature lines after ASM address | :heavy_check_mark: | 
+| Branch to code cave | feature lines before bl address | feature lines after bl address | :heavy_check_mark: | 
+| Branch with target address | wing length for bl address | wing length for bl target address | :x: | 
+
+* **Regenerate**: Useful when logs window show "address not found". Please change wing length and regenerate until single hit, or maybe double.
+
+#### Save cheat codes with "SaveCHT" button
 
 
 ## Building from Source
