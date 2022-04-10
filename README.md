@@ -88,7 +88,7 @@ Under construction after a stable release with original codes.
 ## Trouble Shooting
 1. Why my new codes doesn't work?
   
-    A: On most cases, they are pointer cheat codes that can be recognized from the logs window. Please update these cheats with [EdiZon SE](https://github.com/tomvita/EdiZon-SE).
+    A: On most cases, they are pointer cheat codes that can be recognized from the logs window. Please update these cheats with [EdiZon SE](https://github.com/tomvita/EdiZon-SE) or [SE tools](https://gbatemp.net/threads/se-tools-all-your-game-memory-hacking-needs-in-one-package.575131/).
 
 2. Why my new codes break the game?
 
