@@ -43,7 +43,7 @@ If you need a Chinese version introduction, please refer [here](https://www.91tv
 
 ### Pre-Requisites
 
-* Better windows platform, mac/linux not tested
+* Windows 10 (:heavy_check_mark:), Windows 7 (:x:), Mac/Linux (❓)
 * No python environment required
 
 ### Downloading
