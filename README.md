@@ -13,6 +13,9 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
   	- [Downloading](#downloading)
   	- [Usage](#usage)
 - [Building from Source](#building-from-source)
+    - [Pre-Requisites For Build](#pre-requisites-for-build)
+  	- [Hints For Pre-Requisites](#hints-for-pre-requisites)
+  	- [Usage For Build](#usage-for-build)
 - [Trouble Shooting](#trouble-shooting)
 - [Contribution](#contribution)
 - [Credits](#credits)
@@ -82,16 +85,17 @@ Logs window has everything you need when updating cheat codes.
 
 ## Building from Source
 
-### Pre-Requisites
+### Pre-Requisites For Build
 * Python 3.9
 * Packages in requirements.txt
 * [upx](https://github.com/upx/upx) (if bundling to one file need)
 * Spec file for pyinstaller (refer [here](https://pyinstaller.org/en/stable/spec-files.html) for more info)
 
-### Hints
+### Hints For Pre-Requisites
 * Choose any python version lower than 3.9 will unleash the support of Windows 7, but not tested. Please use at your own risk.
+* There is a main.spec template in project root directory, please change demanded parameters before use.
 
-### Usage
+### Usage For Build
 
 #### Install Python and upx
 * Don't forget to add environment variables.
