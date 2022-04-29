@@ -82,7 +82,31 @@ Logs window has everything you need when updating cheat codes.
 
 ## Building from Source
 
-Under construction after a stable release with original codes.
+### Pre-Requisites
+* Python 3.9
+* Packages in requirements.txt
+* [upx](https://github.com/upx/upx) (if bundling to one file need)
+* Spec file for pyinstaller (refer [here](https://pyinstaller.org/en/stable/spec-files.html) for more info)
+
+### Hints
+* Choose any python version lower than 3.9 will unleash the support of Windows 7, but not tested. Please use at your own risk.
+
+### Usage
+
+#### Install Python and upx
+* Don't forget to add environment variables.
+
+#### Download source code
+
+#### Use any command shell you familar with to install support packages
+    cd your_source_code_root_dir
+    py -3.9 -m pip install -r requirements.txt
+
+#### Run the project
+    py -3.9 __main__.py
+    
+#### OR build the project
+    pyinstaller -F -w your_spec_name.spec --upx-dir your_upx_dir
 
 
 ## Trouble Shooting
@@ -99,9 +123,9 @@ Under construction after a stable release with original codes.
     A: It happened when the application failed to get main file bytes. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
 
 
-## Contribution
+## Contributing
 
-Under construction after a stable release with original codes.
+Feel free to dive in! [Open an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new) or [submit PRs](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/pulls).
 
 
 ## Credits
@@ -124,8 +148,6 @@ All the helpers for bringing this project to life!
 ## License
 
 This project is licensed under GNU General Public License v3.0.
-<a href="https://www.gnu.org/licenses/gpl-3.0.en.html">
-<image src="http://www.gnu.org/graphics/gplv3-127x51.png" align="right">
-</a>
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><image src="http://www.gnu.org/graphics/gplv3-127x51.png" align="right"></a>
 
 Refer the [LICENSE](LICENSE) file for more details.
