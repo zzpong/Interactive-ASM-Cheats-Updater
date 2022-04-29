@@ -4,7 +4,7 @@
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/main/program_capture.png)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_capture.png)
 
 ## Table of Contents
 - [Functions](#functions)
@@ -24,7 +24,7 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 ## Functions
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/main/program_icon.jpg)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_icon.jpg)
 
 Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Update game cheats to other locales (if they don't rewrite the game code, then yes)
