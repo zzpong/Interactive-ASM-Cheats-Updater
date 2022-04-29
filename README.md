@@ -98,6 +98,7 @@ Under construction after a stable release with original codes.
 
     A: It happened when the application failed to get main file bytes. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
 
+
 ## Contribution
 
 Under construction after a stable release with original codes.
@@ -122,4 +123,9 @@ All the helpers for bringing this project to life!
 
 ## License
 
-This project is licensed under GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under GNU General Public License v3.0.
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html">
+<image src="http://www.gnu.org/graphics/gplv3-127x51.png" align="right">
+</a>
+
+Refer the [LICENSE](LICENSE) file for more details.
