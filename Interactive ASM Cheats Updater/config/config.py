@@ -2,7 +2,7 @@ localization = {
     "loc_EN":
         {
             "title": "Interactive ASM Cheats Updater ver 0.1",
-            "wing_length_default": "[20, 30]",
+            "wing_length_default": "[1, 1]",
             "hints_map":
             {
                 "Old Main File:": "Old Main File:",
@@ -47,6 +47,8 @@ localization = {
                 "Saved": """['Saved']""",
                 "OK": """['OK']""",
                 "Cancel": """['Cancel']""",
+                "nsnsotool warning": """['nsnsotool failed working']""",
+                "nsnsotool missing": """['tools/nsnsotool.exe missing']""",
                 "asm_normal_asm_no_addr": 
                     """[f'This part is normal asm code. No address located, please change wing length and regenerate.',
                         '--- Both "generate" or "skip" will discard, "regenerate" to research ---']""",
