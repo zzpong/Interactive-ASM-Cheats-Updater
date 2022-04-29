@@ -94,6 +94,9 @@ Under construction after a stable release with original codes.
 
     A: Game developer will make a huge change for some specific version of games, like adding new function or improving code efficiency. In these cases, the ASM cheat codes need to be refind. 
 
+3. Why this application repeating same title over and over again?
+
+    A: It happened when the application failed to get main file bytes. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
 
 ## Contribution
 
