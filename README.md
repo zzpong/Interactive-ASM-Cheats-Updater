@@ -36,6 +36,7 @@ Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Auto fill cheat bids when saving .txt file
 
 TODO:
+- [ ] ASM code display
 - [ ] Save modified .NSO file base on cheats
 - [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
 
