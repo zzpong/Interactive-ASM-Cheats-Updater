@@ -248,6 +248,7 @@ class ASM_updater_UI:
         self.script_path = root_path
         self.log_path = os.path.join(self.script_path, 'log')
         self.back_path = os.path.join(self.script_path, 'back_up')
+        self.tool_path = os.path.join(self.script_path, 'tools')
         #self.main_old_file = None
         self.old_is_NSO_file = False
         #self.main_new_file = None
@@ -303,16 +304,20 @@ class ASM_updater_UI:
                 debug_path = os.path.join(self.script_path, 'back_up', f'{file_name}_old.bak')
                 shutil.copyfile(file_path, debug_path)
                 try:
-                    # os.system(f'cd tools && nsnsotool "{file_path}"')  # Hints: Recognized as virus by Windows Defender
-                    process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-                    commands = ('cd tools\n'
-                                f'nsnsotool "{file_path}"\n'
-                            )
-                    outs, errs = process.communicate(commands.encode('gbk'))
-                    content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
-                    print(*content, sep="\n")
+                    if os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
+                        # os.system(f'cd tools && nsnsotool "{file_path}"')  # Hints: Recognized as virus by Windows Defender
+                        process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+                        commands = ('cd tools\n'
+                                    f'nsnsotool "{file_path}"\n'
+                                )
+                        outs, errs = process.communicate(commands.encode('gbk'))
+                        content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
+                        print(*content, sep="\n")
+                    else:
+                        messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['nsnsotool missing'])))
+                        return
                 except:
-                    pass
+                    messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['nsnsotool warning'])))
                 self.log_out('\n'.join(eval(self.loc_msg_map['NSO file decompressed'])), False)
             self.main_old_file.get_struct_from_file()
             self.main_old_file.get_mainfunc_file()
@@ -355,16 +360,20 @@ class ASM_updater_UI:
                 debug_path = os.path.join(self.script_path, 'back_up', f'{file_name}_new.bak')
                 shutil.copyfile(file_path, debug_path)
                 try:
-                    # os.system(f'cd tools && nsnsotool "{file_path}"')
-                    process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-                    commands = ('cd tools\n'
-                                f'nsnsotool "{file_path}"\n'
-                            )
-                    outs, errs = process.communicate(commands.encode('gbk'))
-                    content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
-                    print(*content, sep="\n")
+                    if os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
+                        # os.system(f'cd tools && nsnsotool "{file_path}"')
+                        process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+                        commands = ('cd tools\n'
+                                    f'nsnsotool "{file_path}"\n'
+                                )
+                        outs, errs = process.communicate(commands.encode('gbk'))
+                        content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
+                        print(*content, sep="\n")
+                    else:
+                        messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['nsnsotool missing'])))
+                        return
                 except:
-                    pass
+                    messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['nsnsotool warning'])))
                 self.log_out('\n'.join(eval(self.loc_msg_map['NSO file decompressed'])), False)
             self.main_new_file.get_struct_from_file()
             self.main_new_file.get_mainfunc_file()
@@ -406,6 +415,10 @@ class ASM_updater_UI:
         self.output_cheats_text.insert('insert', message)
         self.output_cheats_text.config(state=DISABLED)
         self.output_cheats_text.see(END)
+
+    def wing_length_out(self, message: str):
+        self.wings_text.delete(0, END)
+        self.wings_text.insert(0, message)
 
     def btn_enable_after_load(self, is_btn_enabled: bool):
         if is_btn_enabled:
@@ -479,7 +492,7 @@ class ASM_updater_UI:
             wing_length = [eval(wing_length_list.group(1)), eval(wing_length_list.group(2))]
         else:
             messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['Wing length check message'])))
-            wing_length = [20, 30]
+            wing_length = eval(self.loc_wing_length_default)
             self.wings_text.delete(0, END)
             self.wings_text.insert(0, self.loc_wing_length_default)
         return wing_length
@@ -750,7 +763,7 @@ class ASM_updater_UI:
                 if searching_next_flag == True:
                     json_code_cache.update(json_asm_combine_code_cache)
                     json_asm_combine_code_cache = {}
-                    searching_next_flag == False
+                    searching_next_flag = False
                 current_index = 0
                 json_cache = {
                         f'{cheats_count}':
@@ -817,6 +830,118 @@ class ASM_updater_UI:
 
         print(cheats_script_json)
         return cheats_script_json
+
+    def find_addr(self, addr_range, wing_length):
+        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+        bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
+        hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
+        hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
+        return hit_start_addr
+
+    def find_addr_re(self, addr_range, wing_length):  # massive decrease search when no addr find is meaningless
+        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+        bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
+        hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
+        if isinstance(wing_length, int):
+            hit_end_addr = list(map(lambda x:x+int(json_bytes_feature["taget_end_offset"],16)+wing_length*4, hit_start_addr))
+            wing_length_org = wing_length
+        else:
+            hit_end_addr = list(map(lambda x:x+int(json_bytes_feature["taget_end_offset"],16)+wing_length[1]*4, hit_start_addr))
+            wing_length_org = deepcopy(wing_length)
+
+        wing_step = 1  # recovery rate
+        left_side_available = True
+        right_side_available = True
+
+        if len(hit_start_addr) != 0:
+            while len(hit_start_addr) != 1:
+                if isinstance(wing_length, int):
+                    hit_start_addr_next = []
+                    hit_end_addr_next = []
+                    wing_length_next = wing_length
+                    wing_length_next += wing_step  # check both
+                    for index in range(len(hit_start_addr)):
+                        bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next-wing_length_org)*4 : hit_end_addr[index]+(wing_length_next-wing_length_org)*4]
+                        if self.check_addr(addr_range, wing_length_next, bytes_file):
+                            hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
+                            hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
+                        else:
+                            pass
+                    if len(hit_start_addr_next) != 0:
+                        hit_start_addr = deepcopy(hit_start_addr_next)
+                        hit_end_addr_next = deepcopy(hit_end_addr_next)
+                        wing_length = wing_length_next
+                        self.wing_length_out(wing_length)
+                        if len(hit_start_addr_next) == 1:
+                            # log_out('Single address found.')
+                            break
+                    else:
+                        break
+                else:
+                    if left_side_available:
+                        hit_start_addr_next = []
+                        hit_end_addr_next = []
+                        wing_length_next = deepcopy(wing_length)
+                        wing_length_next[0] += wing_step  # check left
+                        for index in range(len(hit_start_addr)):
+                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next[0]-wing_length_org[0])*4 : hit_end_addr[index]+(wing_length_next[1]-wing_length_org[1])*4]
+                            if self.check_addr(addr_range, wing_length_next, bytes_file):
+                                hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
+                                hit_end_addr_next.append(hit_end_addr[index])
+                            else:
+                                pass
+                        if len(hit_start_addr_next) != 0:
+                            hit_start_addr = deepcopy(hit_start_addr_next)
+                            hit_end_addr_next = deepcopy(hit_end_addr_next)
+                            wing_length = deepcopy(wing_length_next)
+                            self.wing_length_out(f'[{wing_length[0]}, {wing_length[1]}]')
+                            if len(hit_start_addr_next) == 1:
+                                # log_out('Single address found.')
+                                break
+                        else:
+                            left_side_available = False
+
+                    if right_side_available:
+                        hit_start_addr_next = []
+                        hit_end_addr_next = []
+                        wing_length_next = deepcopy(wing_length)
+                        wing_length_next[1] += wing_step  # check right
+                        for index in range(len(hit_start_addr)):
+                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next[0]-wing_length_org[0])*4 : hit_end_addr[index]+(wing_length_next[1]-wing_length_org[1])*4]
+                            if self.check_addr(addr_range, wing_length_next, bytes_file):
+                                hit_start_addr_next.append(hit_start_addr[index])
+                                hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
+                            else:
+                                pass
+                        if len(hit_start_addr_next) != 0:
+                            hit_start_addr = deepcopy(hit_start_addr_next)
+                            hit_end_addr_next = deepcopy(hit_end_addr_next)
+                            wing_length = deepcopy(wing_length_next)
+                            self.wing_length_out(f'[{wing_length[0]}, {wing_length[1]}]')
+                            if len(hit_start_addr_next) == 1:
+                                # log_out('Single address found.')
+                                break
+                        else:
+                            right_side_available = False
+                    
+                    if not left_side_available and not right_side_available:
+                        break
+              
+        if isinstance(wing_length, int):
+            hit_code_start_addr = list(map(lambda x:hex(x+wing_length*4), hit_start_addr))
+        else:
+            hit_code_start_addr = list(map(lambda x:hex(x+wing_length[0]*4), hit_start_addr))
+       
+        return hit_code_start_addr
+    
+    def check_addr(self, addr_range, wing_length, bytes_file):
+        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+        bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
+        hit_start_addr = bytesarray_refindall(bytes_file, bytes_feature)
+        if len(hit_start_addr) == 0:
+            return False
+        else:
+            return True
 
     def process(self, is_skip: bool):
         if not is_skip:
@@ -1087,11 +1212,7 @@ class ASM_updater_UI:
                                 self.current_out(current_out_text, True)
                                 
                                 _asm_cache_json = deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))])
-                                json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                                [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
-                                bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
-                                hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
-                                hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 print(hit_start_addr_str)
                                 is_generate_button_discard = False
@@ -1164,11 +1285,7 @@ class ASM_updater_UI:
                                         elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None:
                                             bl_target_hit_start_addr = []
                                             bl_target_wing_length = self.check_wings()
-                                            bl_target_json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                                            [self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
-                                            bl_target_bytes_feature = bytes(bytearray.fromhex(bl_target_json_bytes_feature["bytes_feature"]))
-                                            bl_target_hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bl_target_bytes_feature)
-                                            bl_target_hit_start_addr = list(map(lambda x:hex(x+int(bl_target_json_bytes_feature["taget_start_offset"],16)), bl_target_hit_start_addr))
+                                            bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
                                             bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                             if len(bl_target_hit_start_addr_str) == 0:
                                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
@@ -1194,20 +1311,12 @@ class ASM_updater_UI:
                                     else:
                                         bl_target_wing_length = deepcopy(wing_length)
                                         bl_target_wing_length[0] = bl_target_wing_length[1]
-                                        wing_length[1] = wing_length[0]
-                                    
-                                    bl_target_json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                                    [self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
-                                    bl_target_bytes_feature = bytes(bytearray.fromhex(bl_target_json_bytes_feature["bytes_feature"]))
-                                    bl_target_hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bl_target_bytes_feature)
-                                    bl_target_hit_start_addr = list(map(lambda x:hex(x+int(bl_target_json_bytes_feature["taget_start_offset"],16)), bl_target_hit_start_addr))
+                                        wing_length[1] = wing_length[0] 
+                                
+                                    bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                                json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                                [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
-                                bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
-                                hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
-                                hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                                 if len(hit_start_addr) == 0:
@@ -1343,11 +1452,7 @@ class ASM_updater_UI:
 
                 cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-2)]['current_out_text']['contents']['asm_cache_json'])
                 _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
-                json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
-                bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
-                hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
-                hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
+                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
                 hit_start_addr_str = ', '.join(hit_start_addr)
                 print(hit_start_addr_str)
                 is_generate_button_discard = False
@@ -1400,11 +1505,7 @@ class ASM_updater_UI:
                                 elif cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None:  # to main addr that not in cheat codes
                                     bl_target_hit_start_addr = []
                                     bl_target_wing_length = self.check_wings()
-                                    bl_target_json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                                    [cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
-                                    bl_target_bytes_feature = bytes(bytearray.fromhex(bl_target_json_bytes_feature["bytes_feature"]))
-                                    bl_target_hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bl_target_bytes_feature)
-                                    bl_target_hit_start_addr = list(map(lambda x:hex(x+int(bl_target_json_bytes_feature["taget_start_offset"],16)), bl_target_hit_start_addr))
+                                    bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                     if len(bl_target_hit_start_addr_str) == 0:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
@@ -1430,18 +1531,10 @@ class ASM_updater_UI:
                             bl_target_wing_length[0] = bl_target_wing_length[1]
                             wing_length[1] = wing_length[0]
                                     
-                        bl_target_json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                        [cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
-                        bl_target_bytes_feature = bytes(bytearray.fromhex(bl_target_json_bytes_feature["bytes_feature"]))
-                        bl_target_hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bl_target_bytes_feature)
-                        bl_target_hit_start_addr = list(map(lambda x:hex(x+int(bl_target_json_bytes_feature["taget_start_offset"],16)), bl_target_hit_start_addr))
+                        bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
                         bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                    json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, 
-                    [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
-                    bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
-                    hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
-                    hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
+                    hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
                     hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                     if len(hit_start_addr) == 0:
