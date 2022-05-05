@@ -1,6 +1,6 @@
 # Interactive-ASM-Cheats-Updater
 
-![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.9+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
+![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.8+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
@@ -46,7 +46,7 @@ If you need a Chinese version introduction, please refer [here](https://www.91tv
 
 ### Pre-Requisites
 
-* Windows 10 (:heavy_check_mark:), Windows 7 (:x:), Mac/Linux (❓)
+* Windows 10 (:heavy_check_mark:), Windows 7 (:x: if ver < 0.2), Mac/Linux (❓)
 * No python environment required
 
 ### Downloading
