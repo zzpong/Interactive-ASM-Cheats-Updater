@@ -763,7 +763,7 @@ class ASM_updater_UI:
                 if searching_next_flag == True:
                     json_code_cache.update(json_asm_combine_code_cache)
                     json_asm_combine_code_cache = {}
-                    searching_next_flag == False
+                    searching_next_flag = False
                 current_index = 0
                 json_cache = {
                         f'{cheats_count}':
@@ -838,7 +838,7 @@ class ASM_updater_UI:
         hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
         return hit_start_addr
 
-    def find_addr_re(self, addr_range, wing_length):
+    def find_addr_re(self, addr_range, wing_length):  # massive decrease search when no addr find is meaningless
         json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
         bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
         hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
