@@ -27,7 +27,8 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_icon.jpg)
 
 Now supports (same logic with cheats makers updating their codes like AOB):
-- [x] Update game cheats to other locales (if they don't rewrite the game code, then yes)
+- [x] Update game cheat codes to other locales (if they don't rewrite the game code, then yes)
+- [x] Upgrade or degrade cheat codes
 - [x] Search the whole main file for code features
 - [x] Update normal ASM codes
 - [x] Update code cave codes
