@@ -26,18 +26,19 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_icon.jpg)
 
-Now supports (same logic with cheats makers updating their codes like AOB):
-- [x] Update game cheat codes to other locales (if they don't rewrite the game code, then yes)
+Now supports (same logic with code makers updating their codes like AOB from Cheat Engine):
 - [x] Upgrade or degrade cheat codes
+- [x] Update game cheat codes to other locales (if they don't rewrite the game code, then yes)
 - [x] Search the whole main file for code features
-- [x] Update normal ASM codes
-- [x] Update code cave codes
+- [x] Update normal ASM/code cave codes
 - [x] Skip page/pageoff codes
 - [x] Recognize branch codes and modify their pointer
 - [x] Auto fill cheat bids when saving .txt file
+- [x] Self-adapting inner parameters
 
 TODO:
 - [ ] ASM code display
+- [ ] Output address sync with ASM code display
 - [ ] Save modified .NSO file base on cheats
 - [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
 
