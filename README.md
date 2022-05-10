@@ -127,7 +127,7 @@ Logs window has everything you need when updating cheat codes.
 
 3. Why this application repeating same title over and over again?
 
-    A: It happened when capstone in the application failed to recognize bytes features. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool decompressing command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
+    A: It happened when capstone in the application failed to recognize bytes features. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool decompressing command failed (fixed), application folder structure destroyed, cheat codes BID different from old main file. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
 
 
 ## Contributing
