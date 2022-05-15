@@ -1368,13 +1368,14 @@ class ASM_updater_UI:
 
         if self.stage < self.stage_max:  # inner processing
             if self.stage_detail_json['processed'][str(self.stage)]['type'] != 'code' and self.stage_detail_json['processed'][str(self.stage)]['type'] != 'master_code':  # not code
-                current_text_type = 'title'
+                current_text_type = 'title'  # 'comments' included
                 current_out_text = '\n'.join(self.stage_detail_json['processed'][str(self.stage)]['contents'])
                 current_out_json = current_out_text
                 self.current_out(current_out_text, True)
                 log_out_text = '\n'.join(eval(self.loc_msg_map['no_code']))
                 self.log_out(log_out_text, True)
                 self.reset_middle_ASM_state()
+                self.reset_wings()
                 self.stage += 1
             elif not self.stage_detail_json['processed'][str(self.stage)]['contents']['has_asm_code']:  # code but no asm (master code equals code here)
                 current_text_type = 'normal_code'
@@ -1391,6 +1392,7 @@ class ASM_updater_UI:
                 log_out_text = '\n'.join(eval(self.loc_msg_map['code_but_no_asm']))
                 self.log_out(log_out_text, True)
                 self.reset_middle_ASM_state()
+                self.reset_wings()
                 self.stage += 1
             else:  # asm code
                 if self.is_asm_title_part:
@@ -1412,6 +1414,7 @@ class ASM_updater_UI:
                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_title']))
                     self.log_out(log_out_text, True)
                     self.reset_middle_ASM_state()
+                    self.reset_wings()
                 elif len(self.asm_cache_json) != 0:
                     if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'Normal':
                         current_out_text = ''
