@@ -1,8 +1,9 @@
 localization = {
     "loc_EN":
         {
-            "title": "Interactive ASM Cheats Updater ver 0.2",
+            "title": "Interactive ASM Cheats Updater ver 0.3",
             "wing_length_default": "[1, 1]",
+            "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
             {
                 "Old Main File:": "Old Main File:",
@@ -15,7 +16,12 @@ localization = {
                 "New cheats will be here:": "New cheats will be here:",
                 "Load Old Main NSO File": "Load Old Main NSO File",
                 "Load New Main NSO File": "Load New Main NSO File",
-                "Save new cheats": "Save new cheats"
+                "Save new cheats": "Save new cheats",
+                "Old Main ASM:": "Old Main ASM:",
+                "New Main ASM:": "New Main ASM:",
+                "Extra Wing Length:": "Extra Length:",
+                # "Branch": "Switch to Branch Target ASM Code"
+                "Branch": "Switch to BL Target"
             },
             "btn_map":
             {
@@ -31,7 +37,10 @@ localization = {
                 "GitHub": "Github",
                 "copy": "copy",
                 "paste": "paste",
-                "cut": "cut"
+                "cut": "cut",
+                "Update": "Update",
+                "Prev": "Prev Addr",
+                "Next": "Next Addr"
             },
             "msg_map":
             {
@@ -41,6 +50,7 @@ localization = {
                 "BID message": """[f'BID of cheat code should be "{self.main_old_file.ModuleId.upper()}".']""",
                 "Pre-process message": """['080X0000 cheat codes have been splited into 04.']""",
                 "Wing length check message": """['Wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
+                "Extra wing length check message": """['Extra wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
                 "Unknown cheat format": """[f'Unknown cheat format removed: {i}']""",
                 "Cheat Code": """['Cheat Code']""",
                 "Saved": """['Saved']""",
@@ -53,7 +63,7 @@ localization = {
                         '--- Both "generate" or "skip" will discard, "regenerate" to research ---']""",
                 "asm_normal_asm_multi_addr": 
                     """[f'This part is normal asm code. Multiple address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate" ---']""",
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
                 "asm_normal_asm_single_addr":
                     """[f'This part is normal asm code. Address [{hit_start_addr_str}] located.',
                         '--- Press "generate" to export or "skip" to discard ---']""",
@@ -83,7 +93,7 @@ localization = {
                     """['This part is asm bl code in code cave.',
                         f'New code cave {code_cave_addr} find.',
                         f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate" ---']""",
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
                 "asm_bl_cave_single_addr":
                     """['This part is asm bl code in code cave.',
                         f'New code cave {code_cave_addr} find.',
@@ -102,7 +112,7 @@ localization = {
                     """['This part is asm bl code.',
                         f'Multiple address [{hit_start_addr_str}] located.',
                         'Branch link search failed.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate", branch link unchanged ---',
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate", branch link unchanged ---',
                         '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
                 "asm_bl_single_to_none":
                     """['This part is asm bl code.',
@@ -114,19 +124,19 @@ localization = {
                     """['This part is asm bl code.',
                         f'Multiple address [{hit_start_addr_str}] located.',
                         f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate" ---',
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---',
                         '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
                 "asm_bl_single_to_multi":
                     """['This part is asm bl code.',
                         f'Address [{hit_start_addr_str}] located.',
                         f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export, "skip" to discard or "regenerate", FIRST match branch link selected ---'
+                        '--- Press "generate" to export, "skip" to discard or "regenerate", the branch link match that highlighted in New Main ASM window selected ---'
                         '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
                 "asm_bl_multi_to_single":
                     """['This part is asm bl code.',
                         f'Multiple address [{hit_start_addr_str}] located.',
                         f'Branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate" ---',
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---',
                         '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
                 "asm_bl_single_to_single":
                     """['This part is asm bl code.',
@@ -136,7 +146,7 @@ localization = {
                         '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
                 "asm_bl_multi_to_exist":
                     """[f'This part is asm bl code. Multiple address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the FIRST match, "skip" to discard or "regenerate" ---']""",
+                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
                 "asm_bl_single_to_exist":
                     """[f'This part is asm bl code. Address [{hit_start_addr_str}] located.',
                         '--- Press "generate" to export or "skip" to discard ---']""",
@@ -165,8 +175,9 @@ localization = {
         },
  "loc_CN":
         {
-            "title": "金手指自动更新器 ver 0.2c",
+            "title": "金手指自动更新器 ver 0.3c",
             "wing_length_default": "[1, 1]",
+            "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
             {
                 "Old Main File:": "金手指对应Main:",
@@ -179,7 +190,12 @@ localization = {
                 "New cheats will be here:": "新版本金手指输出:",
                 "Load Old Main NSO File": "载入旧版Main文件",
                 "Load New Main NSO File": "载入新版Main文件",
-                "Save new cheats": "保存新版金手指"
+                "Save new cheats": "保存新版金手指",
+                "Old Main ASM:": "旧版ASM源码:",
+                "New Main ASM:": "新版ASM源码:",
+                "Extra Wing Length:": "额外宽度:",
+                # "Branch": "切换至跳转目标区域ASM代码"
+                "Branch": "切换至跳转目标代码"
             },
             "btn_map":
             {
@@ -195,7 +211,10 @@ localization = {
                 "GitHub": "Github",
                 "copy": "复制",
                 "paste": "粘贴",
-                "cut": "剪切"
+                "cut": "剪切",
+                "Update": "更新",
+                "Prev": "上个地址",
+                "Next": "下个地址"
             },
             "msg_map":
             {
@@ -205,6 +224,7 @@ localization = {
                 "BID message": """[f'金手指文件名（BID）必须为 "{self.main_old_file.ModuleId.upper()}"']""",
                 "Pre-process message": """['080X0000金手指代码已自动缩减为04原子代码']""",
                 "Wing length check message": """['翼展宽度必须为整数，如："20"，"[15,10]"']""",
+                "Extra wing length check message": """['额外宽度必须为整数，如："20"，"[15,10]"']""",
                 "Unknown cheat format": """[f'未知金手指代码已移除：{i}']""",
                 "Cheat Code": """['金手指代码']""",
                 "Saved": """['已保存']""",
@@ -217,7 +237,7 @@ localization = {
                         '--- “生成”与“跳过”按钮均会跳过生成，或使用“重新生成”按钮重新搜索 ---']""",
                 "asm_normal_asm_multi_addr": 
                     """[f'这是普通ASM金手指代码，多个新地址[{hit_start_addr_str}]已定位。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
                 "asm_normal_asm_single_addr":
                     """[f'这是普通ASM金手指代码，单个新地址[{hit_start_addr_str}]已定位。',
                         '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
@@ -247,7 +267,7 @@ localization = {
                     """['这是在code cave中的ASM跳转代码。',
                         f'新code cave {code_cave_addr} 已定位。',
                         f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
                 "asm_bl_cave_single_addr":
                     """['这是在code cave中的ASM跳转代码。',
                         f'新code cave {code_cave_addr} 已定位。',
@@ -266,7 +286,7 @@ localization = {
                     """['这是ASM跳转代码。',
                         f'多个新地址 [{hit_start_addr_str}] 已定位。',
                         '跳转地址定位失败。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮。当前跳转地址未变更 ---',
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮。当前跳转地址未变更 ---',
                         '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
                 "asm_bl_single_to_none":
                     """['这是ASM跳转代码。',
@@ -278,19 +298,19 @@ localization = {
                     """['这是ASM跳转代码。',
                         f'多个新地址 [{hit_start_addr_str}] 已定位。',
                         f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
                         '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
                 "asm_bl_single_to_multi":
                     """['这是ASM跳转代码。',
                         f'单个新地址 [{hit_start_addr_str}] 已定位。',
                         f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出第一个跳转匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---'
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---'
                         '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
                 "asm_bl_multi_to_single":
                     """['这是ASM跳转代码。',
                         f'多个新地址 [{hit_start_addr_str}] 已定位。',
                         f'单跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
                         '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
                 "asm_bl_single_to_single":
                     """['这是ASM跳转代码。',
@@ -300,7 +320,7 @@ localization = {
                         '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
                 "asm_bl_multi_to_exist":
                     """[f'这是ASM跳转代码。 多个新地址 [{hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出第一个匹配地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
+                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
                 "asm_bl_single_to_exist":
                     """[f'这是ASM跳转代码。 地址 [{hit_start_addr_str}] 已定位。',
                         '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
