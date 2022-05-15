@@ -78,11 +78,12 @@ class ASM_updater_UI:
         self.loc_btn_map = loc['btn_map']
         self.loc_msg_map = loc['msg_map']
         self.loc_wing_length_default = loc['wing_length_default']
+        self.loc_extra_wing_length_default = loc['loc_extra_wing_length_default']
 
         self.mainWin.title(loc['title'])
         get_pic(xcw_ico, 'xcw.ico')
         self.mainWin.iconbitmap("xcw.ico")
-        self.mainWin.geometry('1000x700')
+        self.mainWin.geometry('1400x800')
         os.remove("xcw.ico")
 
         # Load file frame
@@ -96,7 +97,7 @@ class ASM_updater_UI:
         self.old_file_text = tkinter.Label(self.old_load_file_frame, text=self.loc_hints_map['Old Main File:'])
         self.old_file_text.pack(expand='yes', fill='both', anchor='w', side='left', padx=5, pady=5)
 
-        self.old_file_entry = tkinter.Entry(self.old_load_file_frame, width=38, justify=CENTER, state=DISABLED)
+        self.old_file_entry = tkinter.Entry(self.old_load_file_frame, width=60, justify=CENTER, state=DISABLED)
         self.old_file_entry.pack(expand='yes', fill='both', anchor='center', side='left', padx=5, pady=5)
 
         self.old_file_button = tkinter.Button(self.old_load_file_frame, height=0, text=self.loc_btn_map['Load Old'], relief=RAISED, command=self.load_old_file)
@@ -109,7 +110,7 @@ class ASM_updater_UI:
         self.new_file_text = tkinter.Label(self.new_load_file_frame, text=self.loc_hints_map['New Main File:'])
         self.new_file_text.pack(expand='yes', fill='both', anchor='w', side='left', padx=5, pady=5)
 
-        self.new_file_entry = tkinter.Entry(self.new_load_file_frame, width=38, justify=CENTER, state=DISABLED)
+        self.new_file_entry = tkinter.Entry(self.new_load_file_frame, width=60, justify=CENTER, state=DISABLED)
         self.new_file_entry.pack(expand='yes', fill='both', anchor='center', side='left', padx=5, pady=5)
 
         self.new_file_button = tkinter.Button(self.new_load_file_frame, height=0, text=self.loc_btn_map['Load New'], relief=RAISED, command=self.load_new_file)
@@ -150,7 +151,7 @@ class ASM_updater_UI:
         self.current_cheats_script = tkinter.Label(self.middle_cheats_up_frame, text=self.loc_hints_map['Current processing cheat:'])
         self.current_cheats_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Current cheats text
-        self.current_cheats_text = ScrolledText(self.middle_cheats_up_frame, width=40, height=15, state=DISABLED)
+        self.current_cheats_text = ScrolledText(self.middle_cheats_up_frame, width=40, height=20, state=DISABLED)
         self.current_cheats_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
 
         # Middle cheats wings frame
@@ -193,8 +194,69 @@ class ASM_updater_UI:
         self.log_script = tkinter.Label(self.middle_cheats_down_frame, text=self.loc_hints_map['Logs:'])
         self.log_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Log text
-        self.log_text = ScrolledText(self.middle_cheats_down_frame, width=40, height=15, state=DISABLED)
+        self.log_text = ScrolledText(self.middle_cheats_down_frame, width=40, height=20, state=DISABLED)
         self.log_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
+    
+        # Middle ASM frame
+        self.middle_ASM_frame = tkinter.Frame(self.main_cheats_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
+        self.middle_ASM_frame.pack(expand='yes', fill='both', anchor='center', side='left', padx=5, pady=5)
+
+        # Middle ASM up frame
+        self.middle_ASM_up_frame = tkinter.Frame(self.middle_ASM_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
+        self.middle_ASM_up_frame.pack(expand='yes', fill='both', anchor='center', side='top', padx=5, pady=5)
+
+        # Old ASM script
+        self.old_ASM_script = tkinter.Label(self.middle_ASM_up_frame, text=self.loc_hints_map['Old Main ASM:'])
+        self.old_ASM_script.pack(anchor='w', side='top', padx=5, pady=5)
+        # Old ASM script
+        self.old_ASM_text = ScrolledText(self.middle_ASM_up_frame, width=40, height=20, state=DISABLED)
+        self.old_ASM_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
+        self.old_ASM_text.tag_config('high_light_old', foreground='red', background='yellow')
+
+        # Middle ASM wings frame
+        self.middle_ASM_wings_frame = tkinter.Frame(self.middle_ASM_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
+        self.middle_ASM_wings_frame.pack(expand='yes', anchor='center', side='top', padx=5, pady=5)
+        self.middle_ASM_wings_frame.columnconfigure(0, weight=1)
+        # ASM wings script
+        self.ASM_wings_script = tkinter.Label(self.middle_ASM_wings_frame, text=self.loc_hints_map['Extra Wing Length:'])
+        self.ASM_wings_script.pack(anchor='w', side='left', padx=5, pady=5)
+        self.ASM_wings_text = tkinter.Entry(self.middle_ASM_wings_frame, width=15, justify=CENTER)
+        self.ASM_wings_text.pack(anchor='e', fill='x', side='left', padx=5, pady=5)
+        self.ASM_wings_text.delete(0, END)
+        self.ASM_wings_text.insert(0, self.loc_extra_wing_length_default)
+        self.btn_update = tkinter.Button(self.middle_ASM_wings_frame, text=self.loc_btn_map['Update'], width=12, command=self.update)
+        self.btn_update.pack(padx=5, pady=5)
+        self.btn_update.config(state=DISABLED)
+
+        # Middle ASM button frame
+        self.middle_ASM_button_frame = tkinter.Frame(self.middle_ASM_frame)
+        self.middle_ASM_button_frame.pack(expand='yes', anchor='center', side='top', padx=5, pady=5)
+        self.middle_ASM_button_frame.columnconfigure(0, weight=1)
+        # Middle ASM button frame button
+        self.btn_prev_addr = tkinter.Button(self.middle_ASM_button_frame, text=self.loc_btn_map['Prev'], width=10, command=self.previous)
+        self.btn_prev_addr.pack(anchor='w', side='left', padx=5, pady=5)
+        self.btn_prev_addr.config(state=DISABLED)
+        self.btn_next_addr = tkinter.Button(self.middle_ASM_button_frame, text=self.loc_btn_map['Next'], width=10, command=self.next)
+        self.btn_next_addr.pack(anchor='w', side='left', padx=5, pady=5)
+        self.btn_next_addr.config(state=DISABLED)
+        # Middle ASM button frame checkbox
+        self.middle_ASM_checkbox_frame = tkinter.Frame(self.middle_ASM_button_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
+        self.middle_ASM_checkbox_frame.pack(expand='yes', fill='x', anchor='e', side='right', padx=5, pady=5)
+        self.is_check_branch = False
+        self.branch_checkbox = Checkbutton(self.middle_ASM_checkbox_frame, text=self.loc_hints_map['Branch'], variable=self.is_check_branch, onvalue=True, offvalue=False, state=DISABLED, command=self.check)
+        self.branch_checkbox.pack()
+
+        # Middle ASM up frame
+        self.middle_ASM_down_frame = tkinter.Frame(self.middle_ASM_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
+        self.middle_ASM_down_frame.pack(expand='yes', fill='both', anchor='center', side='top', padx=5, pady=5)
+
+        # New ASM script
+        self.new_ASM_script = tkinter.Label(self.middle_ASM_down_frame, text=self.loc_hints_map['New Main ASM:'])
+        self.new_ASM_script.pack(anchor='w', side='top', padx=5, pady=5)
+        # New ASM script
+        self.new_ASM_text = ScrolledText(self.middle_ASM_down_frame, width=40, height=20, state=DISABLED)
+        self.new_ASM_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
+        self.new_ASM_text.tag_config('high_light_new', foreground='red', background='yellow')
 
         # Output cheats frame
         self.output_cheats_frame = tkinter.Frame(self.main_cheats_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
@@ -253,7 +315,7 @@ class ASM_updater_UI:
         self.old_is_NSO_file = False
         #self.main_new_file = None
         self.new_is_NSO_file = False
-        self.stage_detail_json = {'raw':'','processed':'','step':{}}
+        self.stage_detail_json = {'raw':'','processed':'','step':{}}  # main pipeline, plz deepcopy then edit
         self.stage = 0  # cheat codes nums (title included)
         self.stage_max = 0
         self.step = 0  # process steps (one cheat codes contains multiple steps for asm codes)
@@ -261,7 +323,7 @@ class ASM_updater_UI:
         self.is_asm_title_part = True
         self.is_asm_finished = True
         self.asm_cache_json = {}
-        self.bl_addr_and_target_addr = {}
+        self.bl_addr_and_target_addr = {}  # recorded in stage_detail_json
         self.bl_step = 0  # special inner step counts for asm part
         self.code_cave = {}
 
@@ -305,7 +367,7 @@ class ASM_updater_UI:
                 shutil.copyfile(file_path, debug_path)
                 try:
                     if os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
-                        # os.system(f'cd tools && nsnsotool "{file_path}"')  # Hints: Recognized as virus by Windows Defender
+                        # os.system(f'cd tools && nsnsotool "{file_path}"')  # Hints: Recognized as virus by Windows Defender, pyinstaller -w or --noconsole to remove it
                         process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
                         commands = ('cd tools\n'
                                     f'nsnsotool "{file_path}"\n'
@@ -420,6 +482,55 @@ class ASM_updater_UI:
         self.wings_text.delete(0, END)
         self.wings_text.insert(0, message)
 
+    def wing_length_out_re(self, msg: str, wing_type):  # better use decorator
+    # wing_type: 0: normal, 1: bl addr, 2: bl target
+        if wing_type == 0:
+            self.wing_length_out(msg)
+        else:
+            wing_length_old = self.wings_text.get()
+            pattern_int = re.compile(r'^ *(\d{1,}) *$')
+            pattern_list = re.compile(r'^ *\[ *(\d{1,}) *, *(\d{1,}) *\] *$')
+            wing_length_int = pattern_int.match(wing_length_old)
+            wing_length_list = pattern_list.match(wing_length_old)
+            wing_length_new = pattern_list.match(msg)
+            if wing_length_new is not None:
+                wing_side = max(eval(wing_length_new.group(1)), eval(wing_length_new.group(2)))
+            else:
+                wing_side = int(msg)
+            if wing_type == 1:
+                if wing_length_int is not None:  # single input will split into list
+                    self.wing_length_out(f'[{wing_side}, {int(wing_length_int.group(1))}]')
+                elif wing_length_list is not None:
+                    self.wing_length_out(f'[{wing_side}, {eval(wing_length_list.group(2))}]')
+            elif wing_type == 2:
+                if wing_length_int is not None:
+                    self.wing_length_out(f'[{int(wing_length_int.group(1))}, {wing_side}]')
+                elif wing_length_list is not None:
+                    self.wing_length_out(f'[{eval(wing_length_list.group(1))}, {wing_side}]')
+
+    def old_ASM_text_out(self, message: list, high_light_line: list):
+        self.old_ASM_text.config(state=NORMAL)
+        self.old_ASM_text.delete(0.1, END)
+        for index in range(len(message)):
+            if int(high_light_line[0]) <= index <= int(high_light_line[1]):
+                self.old_ASM_text.insert('insert', message[index]+'\n', 'high_light_old')
+            else:
+                self.old_ASM_text.insert('insert', message[index]+'\n')
+        # Warning: text_window compressed, sometimes 'text.see()' doesn't work properly
+        self.old_ASM_text.see(high_light_line[0])
+        self.old_ASM_text.config(state=DISABLED)
+        
+    def new_ASM_text_out(self, message: list, high_light_line: list):
+        self.new_ASM_text.config(state=NORMAL)
+        self.new_ASM_text.delete(0.1, END)
+        for index in range(len(message)):
+            if int(high_light_line[0]) <= index <= int(high_light_line[1]):
+                self.new_ASM_text.insert('insert', message[index]+'\n', 'high_light_new')
+            else:
+                self.new_ASM_text.insert('insert', message[index]+'\n')
+        self.new_ASM_text.see(high_light_line[0])
+        self.new_ASM_text.config(state=DISABLED)
+
     def btn_enable_after_load(self, is_btn_enabled: bool):
         if is_btn_enabled:
             self.btn_generate.config(state=NORMAL)
@@ -496,6 +607,27 @@ class ASM_updater_UI:
             self.wings_text.delete(0, END)
             self.wings_text.insert(0, self.loc_wing_length_default)
         return wing_length
+    
+    def reset_wings(self):
+        self.wings_text.delete(0, END)
+        self.wings_text.insert(0, self.loc_wing_length_default)
+
+    def check_extra_wings(self):
+        wing_length_test = self.ASM_wings_text.get()
+        pattern_int = re.compile(r'^ *(\d{1,}) *$')
+        pattern_list = re.compile(r'^ *\[ *(\d{1,}) *, *(\d{1,}) *\] *$')
+        wing_length_int = pattern_int.match(wing_length_test)
+        wing_length_list = pattern_list.match(wing_length_test)
+        if wing_length_int is not None:
+            extra_wing_length = int(wing_length_int.group(1))
+        elif wing_length_list is not None:
+            extra_wing_length = [eval(wing_length_list.group(1)), eval(wing_length_list.group(2))]
+        else:
+            messagebox.showwarning(title='Warning Extend', message='\n'.join(eval(self.loc_msg_map['Extra wing length check message'])))
+            extra_wing_length = eval(self.loc_extra_wing_length_default)
+            self.ASM_wings_text.delete(0, END)
+            self.ASM_wings_text.insert(0, self.loc_extra_wing_length_default)
+        return extra_wing_length
 
     def check_line(self, cheat_line: str):
     # check one single line from cheat codes, filter format and return info
@@ -521,6 +653,7 @@ class ASM_updater_UI:
                 asm_code_head = is_code[0]
                 asm_code_addr = int(is_code[1], 16)
                 asm_code_main = is_code[2]
+                asm_code_disam = None
                 is_asm_code = False
                 is_code_cave = False
                 is_bl = False
@@ -534,6 +667,7 @@ class ASM_updater_UI:
                 code_bytes.reverse()
                 for i in Disassembler.disasm(code_bytes, asm_code_addr):
                     is_asm_code = True
+                    asm_code_disam = ("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
                     if (asm_code_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
                     and asm_code_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
                         is_code_cave = True
@@ -564,6 +698,7 @@ class ASM_updater_UI:
                                 'code_head': asm_code_head,
                                 'code_addr': asm_code_addr,
                                 'code_main': asm_code_main,
+                                'code_disam': asm_code_disam,
                                 'code_raw': is_code
                             }
                     }
@@ -709,6 +844,7 @@ class ASM_updater_UI:
                                             'code_head': [code_json['contents']['code_head']],
                                             'code_addr': [code_json['contents']['code_addr']],
                                             'code_main': [code_json['contents']['code_main']],
+                                            'code_disam': [code_json['contents']['code_disam']],
                                             'code_raw': [code_json['contents']['code_raw']]
                                         }
                                     }
@@ -730,6 +866,7 @@ class ASM_updater_UI:
                             json_asm_combine_code_cache[f'{current_index}']['contents']['code_head'].append(code_json['contents']['code_head'])
                             json_asm_combine_code_cache[f'{current_index}']['contents']['code_addr'].append(code_json['contents']['code_addr'])
                             json_asm_combine_code_cache[f'{current_index}']['contents']['code_main'].append(code_json['contents']['code_main'])
+                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_disam'].append(code_json['contents']['code_disam'])
                             json_asm_combine_code_cache[f'{current_index}']['contents']['code_raw'].append(code_json['contents']['code_raw'])
                         else:
                             json_code_cache.update(json_asm_combine_code_cache)
@@ -753,6 +890,7 @@ class ASM_updater_UI:
                                             'code_head': [code_json['contents']['code_head']],
                                             'code_addr': [code_json['contents']['code_addr']],
                                             'code_main': [code_json['contents']['code_main']],
+                                            'code_disam': [code_json['contents']['code_disam']],
                                             'code_raw': [code_json['contents']['code_raw']]
                                         }
                                     }
@@ -838,7 +976,7 @@ class ASM_updater_UI:
         hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
         return hit_start_addr
 
-    def find_addr_re(self, addr_range, wing_length):  # massive decrease search when no addr find is meaningless
+    def find_addr_re(self, addr_range, wing_length, wing_type):  # massive decrease search when no addr find is meaningless
         json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
         bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
         hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
@@ -871,7 +1009,7 @@ class ASM_updater_UI:
                         hit_start_addr = deepcopy(hit_start_addr_next)
                         hit_end_addr_next = deepcopy(hit_end_addr_next)
                         wing_length = wing_length_next
-                        self.wing_length_out(wing_length)
+                        self.wing_length_out_re(str(wing_length), wing_type)
                         if len(hit_start_addr_next) == 1:
                             # log_out('Single address found.')
                             break
@@ -894,7 +1032,7 @@ class ASM_updater_UI:
                             hit_start_addr = deepcopy(hit_start_addr_next)
                             hit_end_addr_next = deepcopy(hit_end_addr_next)
                             wing_length = deepcopy(wing_length_next)
-                            self.wing_length_out(f'[{wing_length[0]}, {wing_length[1]}]')
+                            self.wing_length_out_re(f'[{wing_length[0]}, {wing_length[1]}]', wing_type)
                             if len(hit_start_addr_next) == 1:
                                 # log_out('Single address found.')
                                 break
@@ -917,7 +1055,7 @@ class ASM_updater_UI:
                             hit_start_addr = deepcopy(hit_start_addr_next)
                             hit_end_addr_next = deepcopy(hit_end_addr_next)
                             wing_length = deepcopy(wing_length_next)
-                            self.wing_length_out(f'[{wing_length[0]}, {wing_length[1]}]')
+                            self.wing_length_out_re(f'[{wing_length[0]}, {wing_length[1]}]', wing_type)
                             if len(hit_start_addr_next) == 1:
                                 # log_out('Single address found.')
                                 break
@@ -943,6 +1081,147 @@ class ASM_updater_UI:
         else:
             return True
 
+    def generate_current_output(self, cheats_json):
+        raw_cache = []
+        for raw in cheats_json['code_raw']:
+            raw_cache.append(' '.join(raw))
+        return (
+            '=========== ORG ===========\n' +
+            '\n'.join(raw_cache) +
+            '\n\n\n' + '=========== ASM ===========\n' +
+            '\n'.join(cheats_json['code_disam'])
+        )
+
+    def reset_middle_ASM_state(self):
+        self.old_ASM_text.config(state=NORMAL)
+        self.old_ASM_text.delete(0.1, END)
+        self.old_ASM_text.config(state=DISABLED)
+        self.new_ASM_text.config(state=NORMAL)
+        self.new_ASM_text.delete(0.1, END)
+        self.new_ASM_text.config(state=DISABLED)
+        self.ASM_wings_text.delete(0, END)
+        self.ASM_wings_text.insert(0, self.loc_extra_wing_length_default)
+        self.btn_update.config(state=DISABLED)
+        self.btn_prev_addr.config(state=DISABLED)
+        self.btn_next_addr.config(state=DISABLED)
+        self.is_check_branch = False
+        self.branch_checkbox.deselect()
+        self.branch_checkbox.config(state=DISABLED)
+
+    def update_middle_ASM_output(self, _asm_cache_json, update_type):
+    # update_type: 0: current, 1: previous, 2: next, 3: update
+        if update_type == 0:
+            self.reset_middle_ASM_state()  # refresh undo state
+
+        org_addr = _asm_cache_json['contents']['org_addr']
+        bl_org_addr = _asm_cache_json['contents']['bl_org_addr']
+        hit_addr = _asm_cache_json['contents']['hit_addr']
+        addr_chosen = _asm_cache_json['contents']['addr_chosen']
+        bl_target_hit_addr = _asm_cache_json['contents']['bl_target_hit_addr']
+        bl_target_addr_chosen = _asm_cache_json['contents']['bl_target_addr_chosen']
+        wing_length = _asm_cache_json['contents']['wing_length']
+        bl_target_wing_length = _asm_cache_json['contents']['bl_target_wing_length']
+        extra_wing_length = self.check_extra_wings()  # for update button
+
+        if bl_target_addr_chosen is None and addr_chosen is None:
+            return
+
+        if type(wing_length) == int:
+             wing_length = [wing_length, wing_length]
+        if type(bl_target_wing_length) == int:
+             bl_target_wing_length = [bl_target_wing_length, bl_target_wing_length]
+
+        if type(extra_wing_length) == int:
+            extra_wing_length = [extra_wing_length, extra_wing_length]
+        if ((bl_target_addr_chosen is not None and addr_chosen is None) or  # only bl target
+        (bl_target_addr_chosen is not None and addr_chosen is not None and self.is_check_branch)):  # both but choose bl
+            if bl_target_addr_chosen is not None and addr_chosen is None:
+                self.is_check_branch = True
+                self.branch_checkbox.select()
+                self.branch_checkbox.config(state=DISABLED)
+            else:
+                self.is_check_branch = True
+                self.branch_checkbox.select()
+                self.branch_checkbox.config(state=NORMAL)
+            if len(bl_target_hit_addr) > 1:  
+                self.btn_prev_addr.config(state=NORMAL)
+                self.btn_next_addr.config(state=NORMAL)
+            else:
+                self.btn_prev_addr.config(state=DISABLED)
+                self.btn_next_addr.config(state=DISABLED)
+            self.btn_update.config(state=NORMAL)
+            org_wing_range = [bl_org_addr[0]-(bl_target_wing_length[0]+extra_wing_length[0])*4,
+                    bl_org_addr[1]+(bl_target_wing_length[1]+extra_wing_length[1])*4,
+                ]  # Warning: no boundary detection
+
+            if update_type == 1:
+                bl_target_addr_chosen = (bl_target_addr_chosen-1)%len(bl_target_hit_addr)
+            elif update_type == 2:
+                bl_target_addr_chosen = (bl_target_addr_chosen+1)%len(bl_target_hit_addr)
+
+            bl_target_hit_start_addr = int(bl_target_hit_addr[bl_target_addr_chosen], 16)
+            
+            _asm_cache_json['contents']['bl_target_addr_chosen'] = bl_target_addr_chosen
+            _asm_cache_json['contents']['bl_addr'] = bl_target_hit_start_addr
+
+            tag_wing_range = [bl_target_hit_start_addr-(bl_target_wing_length[0]+extra_wing_length[0])*4,
+                            (bl_target_hit_start_addr+4)+(bl_target_wing_length[1]+extra_wing_length[1])*4,
+                        ]  # Warning: no boundary detection
+            
+            high_light_line = [float(bl_target_wing_length[0] + extra_wing_length[0]),  # bl has only one line
+                                float(bl_target_wing_length[0] + extra_wing_length[0])]
+
+
+        if ((bl_target_addr_chosen is None and addr_chosen is not None) or  # only asm
+        (bl_target_addr_chosen is not None and addr_chosen is not None and not self.is_check_branch)):  # both but choose asm
+            if bl_target_addr_chosen is None and addr_chosen is not None:
+                self.is_check_branch = False
+                self.branch_checkbox.deselect()
+                self.branch_checkbox.config(state=DISABLED)
+            else:
+                self.is_check_branch = False
+                self.branch_checkbox.deselect()
+                self.branch_checkbox.config(state=NORMAL)
+            if len(hit_addr) > 1:  
+                self.btn_prev_addr.config(state=NORMAL)
+                self.btn_next_addr.config(state=NORMAL)
+            else:
+                self.btn_prev_addr.config(state=DISABLED)
+                self.btn_next_addr.config(state=DISABLED)
+            self.btn_update.config(state=NORMAL)
+
+            org_wing_range = [org_addr[0]-(wing_length[0]+extra_wing_length[0])*4,
+                            org_addr[1]+(wing_length[1]+extra_wing_length[1])*4,
+                        ]  # Warning: no boundary detection
+
+            if update_type == 1:
+                addr_chosen = (addr_chosen-1)%len(hit_addr)
+            elif update_type == 2:
+                addr_chosen = (addr_chosen+1)%len(hit_addr)
+
+            hit_start_addr = int(hit_addr[addr_chosen], 16)
+            
+            _asm_cache_json['contents']['addr_chosen'] = addr_chosen
+            _asm_cache_json['contents']['base_addr'] = hit_start_addr
+            _high_light_count = 0
+            for _index in range(len(_asm_cache_json['contents']['offset'])):
+                _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
+                hit_start_addr += _asm_cache_json['contents']['offset'][_index]
+                _high_light_count += 1
+            _asm_cache_json['contents']['next_addr'] = hit_start_addr
+
+            tag_wing_range = [int(hit_addr[addr_chosen], 16)-(wing_length[0]+extra_wing_length[0])*4,
+                            hit_start_addr+(wing_length[1]+extra_wing_length[1])*4,
+                        ]  # Warning: no boundary detection
+            
+            high_light_line = [float(wing_length[0] + extra_wing_length[0]),
+                                float(wing_length[0] + extra_wing_length[0] + _high_light_count - 1)]
+
+        self.old_ASM_text_out(get_ASM_code(self.main_old_file.mainFuncFile, org_wing_range), high_light_line)
+        self.new_ASM_text_out(get_ASM_code(self.main_new_file.mainFuncFile, tag_wing_range), high_light_line)
+
+        return _asm_cache_json
+
     def process(self, is_skip: bool):
         if not is_skip:
             if self.step == 0:  # pre-process & restart everthing
@@ -960,6 +1239,7 @@ class ASM_updater_UI:
                 self.bl_addr_and_target_addr = {}
                 self.bl_step = 0
                 self.btn_enable_after_cur_cheat_gen(True)
+                self.reset_wings()
                 if int.from_bytes(self.main_new_file.codeCaveEnd, byteorder='big', signed=False) > int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False):
                     self.code_cave = [int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False),
                     int.from_bytes(self.main_new_file.codeCaveEnd, byteorder='big', signed=False)]
@@ -1094,6 +1374,7 @@ class ASM_updater_UI:
                 self.current_out(current_out_text, True)
                 log_out_text = '\n'.join(eval(self.loc_msg_map['no_code']))
                 self.log_out(log_out_text, True)
+                self.reset_middle_ASM_state()
                 self.stage += 1
             elif not self.stage_detail_json['processed'][str(self.stage)]['contents']['has_asm_code']:  # code but no asm (master code equals code here)
                 current_text_type = 'normal_code'
@@ -1109,6 +1390,7 @@ class ASM_updater_UI:
                 self.current_out(current_out_text, True)
                 log_out_text = '\n'.join(eval(self.loc_msg_map['code_but_no_asm']))
                 self.log_out(log_out_text, True)
+                self.reset_middle_ASM_state()
                 self.stage += 1
             else:  # asm code
                 if self.is_asm_title_part:
@@ -1129,6 +1411,7 @@ class ASM_updater_UI:
                     self.current_out(current_out_text, True)
                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_title']))
                     self.log_out(log_out_text, True)
+                    self.reset_middle_ASM_state()
                 elif len(self.asm_cache_json) != 0:
                     if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'Normal':
                         current_out_text = ''
@@ -1161,6 +1444,7 @@ class ASM_updater_UI:
                         self.current_out(current_out_text, True)
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_code']))
                         self.log_out(log_out_text, True)
+                        self.reset_middle_ASM_state()
                     elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'ASM':
                         if not self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_bl']:  # not bl/branch
                             if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_code_cave']:
@@ -1194,6 +1478,7 @@ class ASM_updater_UI:
                                 if len(self.asm_cache_json) == 0:
                                     current_out_text += '\n'
                                 self.log_out(log_out_text, True)
+                                self.reset_middle_ASM_state()
                                 current_out_json = {
                                     'current_out_text': current_out_text,
                                     'asm_cache_json': deepcopy(self.asm_cache_json),
@@ -1205,34 +1490,38 @@ class ASM_updater_UI:
                             else:  # not bl and not code cave, should be normal asm code
                                 hit_start_addr = []
                                 wing_length = self.check_wings()
-                                current_out_text = ''
-                                for asm_code in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
-                                    current_out_text += ' '.join(asm_code) + '\n'
+                                current_out_text = self.generate_current_output(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents'])
                                 current_text_type = 'asm_normal_asm_code'
                                 self.current_out(current_out_text, True)
                                 
                                 _asm_cache_json = deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))])
-                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0)
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 print(hit_start_addr_str)
+
                                 is_generate_button_discard = False
                                 if len(hit_start_addr) == 0:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_no_addr']))
+                                    self.reset_middle_ASM_state()
                                 else:
                                     if len(hit_start_addr) > 1:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_multi_addr']))
                                     else:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_single_addr']))
                                 
-                                    hit_start_addr = int(hit_start_addr[0], 16)
-                                    
-                                    _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                        _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                        hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                    _asm_cache_json['contents']['next_addr'] = hit_start_addr
-                                
+                                    _asm_cache_json['contents'].update(
+                                    {
+                                        'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                        'bl_org_addr': None,
+                                        'hit_addr': deepcopy(hit_start_addr),
+                                        'addr_chosen': 0,
+                                        'bl_target_hit_addr': [],
+                                        'bl_target_addr_chosen': None,
+                                        'wing_length': deepcopy(self.check_wings()),  # only for ver 0.2 and upper, auto wing_length update
+                                        'bl_target_wing_length': None
+                                    })
+                                    _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
                                 self.bl_addr_and_target_addr.update({str(self.bl_step):_asm_cache_json})
                                 self.bl_step += 1
                                 del self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]
@@ -1248,9 +1537,7 @@ class ASM_updater_UI:
                                     'is_generate_button_discard': is_generate_button_discard
                                 }
                         else:  # is_bl
-                            current_out_text = ''
-                            for asm_code in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
-                                current_out_text += ' '.join(asm_code) + '\n'
+                            current_out_text = self.generate_current_output(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents'])
 
                             _asm_cache_json = deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))])
                             is_generate_button_discard = False
@@ -1262,9 +1549,11 @@ class ASM_updater_UI:
                                 if self.code_cave is None:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_cave']))
+                                    self.reset_middle_ASM_state()
                                 elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) > self.code_cave[1]:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
+                                    self.reset_middle_ASM_state()
                                 elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) <= self.code_cave[1]:
                                     code_cave_addr = '0x' + hex(self.code_cave[0])[2:].zfill(8).upper()
                                     _asm_cache_json['contents']['base_addr'] = self.code_cave[0]
@@ -1274,28 +1563,43 @@ class ASM_updater_UI:
                                     _asm_cache_json['contents']['next_addr'] = self.code_cave[0]
                                     if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is not None:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_has_space']))
+                                        self.reset_middle_ASM_state()
                                     else:
                                         if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_outer'] == True:
                                             is_generate_button_discard = True
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_outer']))
+                                            self.reset_middle_ASM_state()
                                         elif (self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_cave'] == True and
                                             self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None):
                                             is_generate_button_discard = True
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_cave']))
+                                            self.reset_middle_ASM_state()
                                         elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None:
                                             bl_target_hit_start_addr = []
                                             bl_target_wing_length = self.check_wings()
-                                            bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
+                                            bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
                                             bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                             if len(bl_target_hit_start_addr_str) == 0:
                                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
+                                                self.reset_middle_ASM_state()
                                             else:
                                                 if len(bl_target_hit_start_addr) > 1:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_multi_addr']))
                                                 else:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_single_addr']))
-                                                bl_target_hit_start_addr = int(bl_target_hit_start_addr[0], 16)
-                                                _asm_cache_json['contents']['bl_addr'] = bl_target_hit_start_addr
+                                                
+                                                _asm_cache_json['contents'].update(
+                                                {
+                                                    'org_addr': None,
+                                                    'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
+                                                    'hit_addr': [],
+                                                    'addr_chosen': None,
+                                                    'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
+                                                    'bl_target_addr_chosen': 0,
+                                                    'wing_length': None,
+                                                    'bl_target_wing_length': deepcopy(self.check_wings())  # fetch new wing_length
+                                                })
+                                                _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
 
                             else:  # bl in main code
                                 current_text_type = 'asm_bl_code'
@@ -1313,22 +1617,25 @@ class ASM_updater_UI:
                                         bl_target_wing_length[0] = bl_target_wing_length[1]
                                         wing_length[1] = wing_length[0] 
                                 
-                                    bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
+                                    bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2)
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1)
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                                 if len(hit_start_addr) == 0:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_no_addr']))
+                                    self.reset_middle_ASM_state()
                                 elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_outer'] == True:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_to_outer']))
+                                    self.reset_middle_ASM_state()
                                 elif (self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_cave'] == True and
                                     self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None):
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_to_cave']))
+                                    self.reset_middle_ASM_state()
                                 else:
                                     if (self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None and
                                     self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_cave'] == False and
@@ -1341,13 +1648,23 @@ class ASM_updater_UI:
                                             else:
                                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_none']))
 
-                                            hit_start_addr = int(hit_start_addr[0], 16)
-                                            
-                                            _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                            for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                                _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                                hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                            _asm_cache_json['contents']['next_addr'] = hit_start_addr
+                                            wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                                            if type(wing_length) == int:
+                                                wing_length = [wing_length, wing_length]
+                                            else:
+                                                wing_length = [wing_length[0], wing_length[0]]
+                                            _asm_cache_json['contents'].update(
+                                            {
+                                                'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                                'bl_org_addr': None,
+                                                'hit_addr': deepcopy(hit_start_addr),
+                                                'addr_chosen': 0,
+                                                'bl_target_hit_addr': [],
+                                                'bl_target_addr_chosen': None,
+                                                'wing_length': deepcopy(wing_length),
+                                                'bl_target_wing_length': None
+                                            })
+                                            _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
                                         
                                         else:
                                             if len(bl_target_hit_start_addr) > 1:
@@ -1357,46 +1674,59 @@ class ASM_updater_UI:
                                                 else:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_multi']))
 
-                                                hit_start_addr = int(hit_start_addr[0], 16)
-                                                
-                                                _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                                for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                                    _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                                    hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                                _asm_cache_json['contents']['next_addr'] = hit_start_addr
-
                                             elif len(bl_target_hit_start_addr) == 1:
                                                 
                                                 if len(hit_start_addr) > 1:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_multi_to_single']))
                                                 else:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_single']))
-                                            
-                                                hit_start_addr = int(hit_start_addr[0], 16)
-                                                
-                                                _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                                for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                                    _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                                    hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                                _asm_cache_json['contents']['next_addr'] = hit_start_addr
 
-                                            bl_target_hit_start_addr = int(bl_target_hit_start_addr[0], 16)
-                                            _asm_cache_json['contents']['bl_addr'] = bl_target_hit_start_addr
-
-                                    else:
+                                            # bl addr not exist already discard, default update_middle_ASM_output() will update bl addr
+                                            wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                                            if type(wing_length) == int:
+                                                bl_target_wing_length = [wing_length, wing_length]
+                                                wing_length = [wing_length, wing_length]
+                                            else:
+                                                bl_target_wing_length = [wing_length[1], wing_length[1]]
+                                                wing_length = [wing_length[0], wing_length[0]]
+                                            _asm_cache_json['contents'].update(
+                                            {
+                                                'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                                'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
+                                                'hit_addr': deepcopy(hit_start_addr),
+                                                'addr_chosen': 0,
+                                                'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
+                                                'bl_target_addr_chosen': 0,
+                                                'wing_length': deepcopy(wing_length),
+                                                'bl_target_wing_length': deepcopy(bl_target_wing_length),
+                                            })
+                                            # update_middle_ASM_output() will not update bl and target addr at the same time, so this line remains
+                                            _asm_cache_json['contents']['bl_addr'] = int(bl_target_hit_start_addr[0], 16)
+                                            _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
+                                    else:  # bl_line is not None. no need to spare bl target addr space from wing length actually
 
                                         if len(hit_start_addr) > 1:
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_multi_to_exist']))
                                         else:
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_exist']))
-                                    
-                                        hit_start_addr = int(hit_start_addr[0], 16)
-                                        
-                                        _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                        for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                            _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                            hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                        _asm_cache_json['contents']['next_addr'] = hit_start_addr
+
+                                        wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                                        if type(wing_length) == int:
+                                            wing_length = [wing_length, wing_length]
+                                        else:
+                                            wing_length = [wing_length[0], wing_length[0]]
+                                        _asm_cache_json['contents'].update(
+                                        {
+                                            'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                            'bl_org_addr': None,
+                                            'hit_addr': deepcopy(hit_start_addr),
+                                            'addr_chosen': 0,
+                                            'bl_target_hit_addr': [],
+                                            'bl_target_addr_chosen': None,
+                                            'wing_length': deepcopy(wing_length),
+                                            'bl_target_wing_length': None
+                                        })
+                                        _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
 
                             self.bl_addr_and_target_addr.update({str(self.bl_step):_asm_cache_json})
                             self.bl_step += 1
@@ -1452,26 +1782,32 @@ class ASM_updater_UI:
 
                 cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-2)]['current_out_text']['contents']['asm_cache_json'])
                 _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
-                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
+                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0)
                 hit_start_addr_str = ', '.join(hit_start_addr)
                 print(hit_start_addr_str)
                 is_generate_button_discard = False
                 if len(hit_start_addr) == 0:
                     is_generate_button_discard = True
                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_no_addr']))
+                    self.reset_middle_ASM_state()
                 else:
                     if len(hit_start_addr) > 1:
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_multi_addr']))
                     else:
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_asm_single_addr']))
                                     
-                    hit_start_addr = int(hit_start_addr[0], 16)
-                                        
-                    _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                        _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                        hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                    _asm_cache_json['contents']['next_addr'] = hit_start_addr
+                    _asm_cache_json['contents'].update(
+                    {
+                        'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                        'bl_org_addr': None,
+                        'hit_addr': deepcopy(hit_start_addr),
+                        'addr_chosen': 0,
+                        'bl_target_hit_addr': [],
+                        'bl_target_addr_chosen': None,
+                        'wing_length': deepcopy(self.check_wings()),  # only for ver 0.2 and upper, auto wing_length update
+                        'bl_target_wing_length': None
+                    })
+                    _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
 
             else:
                 cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-2)]['current_out_text']['contents']['asm_cache_json'])
@@ -1482,9 +1818,11 @@ class ASM_updater_UI:
                     if _code_cave is None:
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_cave']))
+                        self.reset_middle_ASM_state()
                     elif _code_cave[0] + sum(_asm_cache_json['contents']['offset']) > _code_cave[1]:
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
+                        self.reset_middle_ASM_state()
                     elif _code_cave[0] + sum(_asm_cache_json['contents']['offset']) <= _code_cave[1]:
                         code_cave_addr = '0x' + hex(_code_cave[0])[2:].zfill(8).upper()  # only for log message
                         _asm_cache_json['contents']['base_addr'] = _code_cave[0]
@@ -1494,28 +1832,42 @@ class ASM_updater_UI:
                             _asm_cache_json['contents']['next_addr'] = _code_cave[0]
                             if cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is not None:
                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_has_space']))
+                                self.reset_middle_ASM_state()
                             else:
                                 if cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_outer'] == True:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_outer']))
+                                    self.reset_middle_ASM_state()
                                 elif (cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_cave'] == True and
                                         cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None):
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_cave']))
+                                    self.reset_middle_ASM_state()
                                 elif cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None:  # to main addr that not in cheat codes
                                     bl_target_hit_start_addr = []
                                     bl_target_wing_length = self.check_wings()
-                                    bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
+                                    bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                     if len(bl_target_hit_start_addr_str) == 0:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
+                                        self.reset_middle_ASM_state()
                                     else:
                                         if len(bl_target_hit_start_addr) > 1:
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_multi_addr']))
                                         else:
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_single_addr']))
-                                        bl_target_hit_start_addr = int(bl_target_hit_start_addr[0], 16)
-                                        _asm_cache_json['contents']['bl_addr'] = bl_target_hit_start_addr
+                                        _asm_cache_json['contents'].update(
+                                        {
+                                            'org_addr': None,
+                                            'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
+                                            'hit_addr': [],
+                                            'addr_chosen': None,
+                                            'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
+                                            'bl_target_addr_chosen': 0,
+                                            'wing_length': None,
+                                            'bl_target_wing_length': deepcopy(self.check_wings())  # fetch new wing_length
+                                        })
+                                        _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
                                 self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'] = deepcopy(_code_cave)
                 else:  # bl in main code, bl to exist cave code or cheat code will process in create_bl_links()
                     hit_start_addr = []
@@ -1531,22 +1883,25 @@ class ASM_updater_UI:
                             bl_target_wing_length[0] = bl_target_wing_length[1]
                             wing_length[1] = wing_length[0]
                                     
-                        bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length)
+                        bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2)
                         bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                    hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length)
+                    hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1)
                     hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                     if len(hit_start_addr) == 0:
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_no_addr']))
+                        self.reset_middle_ASM_state()
                     elif cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_outer'] == True:
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_to_outer']))
+                        self.reset_middle_ASM_state()
                     elif (cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_cave'] == True and
                         cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None):
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_to_cave']))
+                        self.reset_middle_ASM_state()
                     else:
                         if (cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None and
                         cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_cave'] == False and
@@ -1559,13 +1914,23 @@ class ASM_updater_UI:
                                 else:
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_none']))
 
-                                hit_start_addr = int(hit_start_addr[0], 16)
-                                            
-                                _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                    _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                    hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                _asm_cache_json['contents']['next_addr'] = hit_start_addr
+                                wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                                if type(wing_length) == int:
+                                    wing_length = [wing_length, wing_length]
+                                else:
+                                    wing_length = [wing_length[0], wing_length[0]]
+                                _asm_cache_json['contents'].update(
+                                {
+                                    'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                    'bl_org_addr': None,
+                                    'hit_addr': deepcopy(hit_start_addr),
+                                    'addr_chosen': 0,
+                                    'bl_target_hit_addr': [],
+                                    'bl_target_addr_chosen': None,
+                                    'wing_length': deepcopy(wing_length),
+                                    'bl_target_wing_length': None
+                                })
+                                _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
                                         
                             else:
                                 if len(bl_target_hit_start_addr) > 1:
@@ -1575,31 +1940,35 @@ class ASM_updater_UI:
                                     else:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_multi']))
 
-                                    hit_start_addr = int(hit_start_addr[0], 16)
-                                                
-                                    _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                        _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                        hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                    _asm_cache_json['contents']['next_addr'] = hit_start_addr
-
                                 elif len(bl_target_hit_start_addr) == 1:
                                                 
                                     if len(hit_start_addr) > 1:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_multi_to_single']))
                                     else:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_single']))
-                                            
-                                    hit_start_addr = int(hit_start_addr[0], 16)
                                                 
-                                    _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                        _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                        hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                                    _asm_cache_json['contents']['next_addr'] = hit_start_addr
-
-                                bl_target_hit_start_addr = int(bl_target_hit_start_addr[0], 16)
-                                _asm_cache_json['contents']['bl_addr'] = bl_target_hit_start_addr
+                                # bl addr not exist already discard, default update_middle_ASM_output() will update bl addr
+                                wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                                if type(wing_length) == int:
+                                    bl_target_wing_length = [wing_length, wing_length]
+                                    wing_length = [wing_length, wing_length]
+                                else:
+                                    bl_target_wing_length = [wing_length[1], wing_length[1]]
+                                    wing_length = [wing_length[0], wing_length[0]]
+                                _asm_cache_json['contents'].update(
+                                {
+                                    'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                    'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
+                                    'hit_addr': deepcopy(hit_start_addr),
+                                    'addr_chosen': 0,
+                                    'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
+                                    'bl_target_addr_chosen': 0,
+                                    'wing_length': deepcopy(wing_length),
+                                    'bl_target_wing_length': deepcopy(bl_target_wing_length),
+                                })
+                                # update_middle_ASM_output() will not update bl and target addr at the same time, so this line remains
+                                _asm_cache_json['contents']['bl_addr'] = int(bl_target_hit_start_addr[0], 16)
+                                _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
 
                         else:
 
@@ -1607,14 +1976,25 @@ class ASM_updater_UI:
                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_multi_to_exist']))
                             else:
                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_single_to_exist']))
-                                    
-                            hit_start_addr = int(hit_start_addr[0], 16)
-                                        
-                            _asm_cache_json['contents']['base_addr'] = hit_start_addr
-                            for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                _asm_cache_json['contents']['code_addr'][_index] = hex(hit_start_addr)[2:].zfill(8).upper()
-                                hit_start_addr += _asm_cache_json['contents']['offset'][_index]
-                            _asm_cache_json['contents']['next_addr'] = hit_start_addr
+                        
+                            wing_length = self.check_wings()  # only for ver 0.2 and upper, auto wing_length update
+                            if type(wing_length) == int:
+                                wing_length = [wing_length, wing_length]
+                            else:
+                                wing_length = [wing_length[0], wing_length[0]]
+                            _asm_cache_json['contents'].update(
+                            {
+                                'org_addr': [_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']],
+                                'bl_org_addr': None,
+                                'hit_addr': deepcopy(hit_start_addr),
+                                'addr_chosen': 0,
+                                'bl_target_hit_addr': [],
+                                'bl_target_addr_chosen': None,
+                                'wing_length': deepcopy(wing_length),
+                                'bl_target_wing_length': None
+                            })
+                            _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
+
             # pack and update data
             self.bl_addr_and_target_addr = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
             _bl_step = self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_step']
@@ -1632,6 +2012,7 @@ class ASM_updater_UI:
         elif self.step == 1:
             self.restart()
         else:
+            self.reset_middle_ASM_state()
             if self.end_flag == True:
                 self.end_flag = False
                 self.output_out(self.stage_detail_json['step'][str(self.step-1)]['output_text'], True)
@@ -1665,6 +2046,7 @@ class ASM_updater_UI:
                 pop_obj.clear()
 
     def restart(self):
+        self.reset_middle_ASM_state()
         self.stage_detail_json = {'raw':'','processed':'','step':{}}
         self.stage = 0
         self.stage_max = 0
@@ -1689,6 +2071,34 @@ class ASM_updater_UI:
 
         self.input_cheats_text.config(state=NORMAL)
         self.btn_enable_after_load(True)
+
+    def update(self):
+        cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+        _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])  # Caution: use first dict not last one, harmless for NOW
+        self.update_middle_ASM_output(_asm_cache_json, 3)
+    
+    def check(self):
+        if not self.is_check_branch:
+            self.is_check_branch = True
+            self.branch_checkbox.select()
+        else:
+            self.is_check_branch = False
+            self.branch_checkbox.deselect()
+        cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+        _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
+        self.update_middle_ASM_output(_asm_cache_json, 3)
+
+    def next(self):
+        cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+        _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
+        cache_regenerate[next(iter(cache_regenerate.keys()))] = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 2))
+        self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(cache_regenerate)
+
+    def previous(self):
+        cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+        _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
+        cache_regenerate[next(iter(cache_regenerate.keys()))] = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 1))
+        self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(cache_regenerate)
 
     def sav_cht(self):
         if self.is_debug_mode.get():

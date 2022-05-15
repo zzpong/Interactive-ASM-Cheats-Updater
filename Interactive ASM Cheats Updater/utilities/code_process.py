@@ -176,6 +176,94 @@ def find_bytes_feature(bytes_file, address, wing_length):
 
     return json_bytes_feature
 
+def get_ASM_code(bytes_file, addr_range):  # remove wing length for address overflow check
+    start_address = addr_range[0]
+    end_address = addr_range[1]
+    asm_binarray = bytes_file[start_address : end_address]
+
+    align_index = bytesarray_findall(asm_binarray, b"\x00\x00\x00\x00")
+    align_prop = []
+    for addr in range(0, len(asm_binarray), 4):
+        if addr in align_index:
+            align_prop.extend([0,0,0,0])
+        else:
+            align_prop.extend([1,1,1,1])
+    asm_json = {}
+    index = 0
+    count = 0
+    while True:
+        if align_prop[index] == 0:
+            try:
+                index_end = align_prop.index(1, index)
+                asm_json.update({
+                    f'{count}':
+                    {
+                        'is_removed': True,
+                        'bytearray': deepcopy(asm_binarray[index:index_end]),
+                        'start_address': start_address + index
+                    }
+                })
+                count += 1
+                index = index_end  
+            except:
+                asm_json.update({
+                    f'{count}':
+                    {
+                        'is_removed': True,
+                        'bytearray': deepcopy(asm_binarray[index:]),
+                        'start_address': start_address + index
+                    }
+                })
+                count += 1
+                break
+        else:
+            try:
+                index_end = align_prop.index(0, index)
+                asm_json.update({
+                    f'{count}':
+                    {
+                        'is_removed': False,
+                        'bytearray': deepcopy(asm_binarray[index:index_end]),
+                        'start_address': start_address + index
+                    }
+                })
+                count += 1
+                index = index_end
+            except:
+                asm_json.update({
+                    f'{count}':
+                    {
+                        'is_removed': False,
+                        'bytearray': deepcopy(asm_binarray[index:]),
+                        'start_address': start_address + index
+                    }
+                })
+                count += 1
+                break
+
+    Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    msg = []
+    gap_length = 0
+
+    for index in range(len(asm_json)):
+        if asm_json[str(index)]['is_removed']:
+            if index == range(len(asm_json))[-1]:
+                gap_length = (end_address - asm_json[str(index)]['start_address'])/4
+            else:
+                gap_length = (asm_json[str(index+1)]['start_address'] - asm_json[str(index)]['start_address'])/4
+            _start_addr = asm_json[str(index)]['start_address']
+            for i in range(len(gap_length)):
+                # msg.append("0x%x:\t%s\t%s" %(hex(_start_addr), 'zero gap', b"\x00\x00\x00\x00"))
+                msg.append("0x%x:\t%s" %(hex(_start_addr), 'zero gap'))
+                _start_addr += 4
+        else:
+            for i in Disassembler.disasm(asm_json[str(index)]['bytearray'], asm_json[str(index)]['start_address']):
+                # msg.append("0x%x:\t%s\t%s\t%s" %(i.address, i.mnemonic, i.op_str, i.bytes))
+                msg.append("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
+    # print(asm_json, '\n'.join(msg))
+    # return '\n'.join(msg)
+    return msg
+
 def create_bl_links(code_with_bl: dict) -> str:
     new_code_line = ''
     Assembler = Ks(KS_ARCH_ARM64, KS_MODE_LITTLE_ENDIAN)
