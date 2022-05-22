@@ -248,13 +248,13 @@ def get_ASM_code(bytes_file, addr_range):  # remove wing length for address over
     for index in range(len(asm_json)):
         if asm_json[str(index)]['is_removed']:
             if index == range(len(asm_json))[-1]:
-                gap_length = (end_address - asm_json[str(index)]['start_address'])/4
+                gap_length = int((end_address - asm_json[str(index)]['start_address'])/4)
             else:
-                gap_length = (asm_json[str(index+1)]['start_address'] - asm_json[str(index)]['start_address'])/4
+                gap_length = int((asm_json[str(index+1)]['start_address'] - asm_json[str(index)]['start_address'])/4)
             _start_addr = asm_json[str(index)]['start_address']
-            for i in range(len(gap_length)):
+            for i in range(gap_length):
                 # msg.append("0x%x:\t%s\t%s" %(hex(_start_addr), 'zero gap', b"\x00\x00\x00\x00"))
-                msg.append("0x%x:\t%s" %(hex(_start_addr), 'zero gap'))
+                msg.append("%s:\t%s" %(hex(_start_addr), 'zero gap'))
                 _start_addr += 4
         else:
             for i in Disassembler.disasm(asm_json[str(index)]['bytearray'], asm_json[str(index)]['start_address']):

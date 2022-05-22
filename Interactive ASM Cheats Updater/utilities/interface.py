@@ -982,10 +982,8 @@ class ASM_updater_UI:
         hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
         if isinstance(wing_length, int):
             hit_end_addr = list(map(lambda x:x+int(json_bytes_feature["taget_end_offset"],16)+wing_length*4, hit_start_addr))
-            wing_length_org = wing_length
         else:
             hit_end_addr = list(map(lambda x:x+int(json_bytes_feature["taget_end_offset"],16)+wing_length[1]*4, hit_start_addr))
-            wing_length_org = deepcopy(wing_length)
 
         wing_step = 1  # recovery rate
         left_side_available = True
@@ -999,7 +997,7 @@ class ASM_updater_UI:
                     wing_length_next = wing_length
                     wing_length_next += wing_step  # check both
                     for index in range(len(hit_start_addr)):
-                        bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next-wing_length_org)*4 : hit_end_addr[index]+(wing_length_next-wing_length_org)*4]
+                        bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-wing_step*4 : hit_end_addr[index]+wing_step*4]
                         if self.check_addr(addr_range, wing_length_next, bytes_file):
                             hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
                             hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
@@ -1007,7 +1005,7 @@ class ASM_updater_UI:
                             pass
                     if len(hit_start_addr_next) != 0:
                         hit_start_addr = deepcopy(hit_start_addr_next)
-                        hit_end_addr_next = deepcopy(hit_end_addr_next)
+                        hit_end_addr = deepcopy(hit_end_addr_next)
                         wing_length = wing_length_next
                         self.wing_length_out_re(str(wing_length), wing_type)
                         if len(hit_start_addr_next) == 1:
@@ -1022,7 +1020,7 @@ class ASM_updater_UI:
                         wing_length_next = deepcopy(wing_length)
                         wing_length_next[0] += wing_step  # check left
                         for index in range(len(hit_start_addr)):
-                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next[0]-wing_length_org[0])*4 : hit_end_addr[index]+(wing_length_next[1]-wing_length_org[1])*4]
+                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-wing_step*4 : hit_end_addr[index]]
                             if self.check_addr(addr_range, wing_length_next, bytes_file):
                                 hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
                                 hit_end_addr_next.append(hit_end_addr[index])
@@ -1030,7 +1028,7 @@ class ASM_updater_UI:
                                 pass
                         if len(hit_start_addr_next) != 0:
                             hit_start_addr = deepcopy(hit_start_addr_next)
-                            hit_end_addr_next = deepcopy(hit_end_addr_next)
+                            hit_end_addr = deepcopy(hit_end_addr_next)
                             wing_length = deepcopy(wing_length_next)
                             self.wing_length_out_re(f'[{wing_length[0]}, {wing_length[1]}]', wing_type)
                             if len(hit_start_addr_next) == 1:
@@ -1045,7 +1043,7 @@ class ASM_updater_UI:
                         wing_length_next = deepcopy(wing_length)
                         wing_length_next[1] += wing_step  # check right
                         for index in range(len(hit_start_addr)):
-                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-(wing_length_next[0]-wing_length_org[0])*4 : hit_end_addr[index]+(wing_length_next[1]-wing_length_org[1])*4]
+                            bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index] : hit_end_addr[index]+wing_step*4]
                             if self.check_addr(addr_range, wing_length_next, bytes_file):
                                 hit_start_addr_next.append(hit_start_addr[index])
                                 hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
@@ -1053,7 +1051,7 @@ class ASM_updater_UI:
                                 pass
                         if len(hit_start_addr_next) != 0:
                             hit_start_addr = deepcopy(hit_start_addr_next)
-                            hit_end_addr_next = deepcopy(hit_end_addr_next)
+                            hit_end_addr = deepcopy(hit_end_addr_next)
                             wing_length = deepcopy(wing_length_next)
                             self.wing_length_out_re(f'[{wing_length[0]}, {wing_length[1]}]', wing_type)
                             if len(hit_start_addr_next) == 1:
