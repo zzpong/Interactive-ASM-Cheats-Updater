@@ -37,8 +37,8 @@ Now supports (same logic with code makers updating their codes like AOB from Che
 - [x] Self-adapting inner parameters
 
 TODO:
-- [ ] ASM code display
-- [ ] Output address sync with ASM code display
+- [x] ASM code display
+- [x] Output address sync with ASM code display
 - [ ] Save modified .NSO file base on cheats
 - [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
 
