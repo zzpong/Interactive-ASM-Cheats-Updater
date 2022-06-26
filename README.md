@@ -4,7 +4,7 @@
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_capture.png)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_capture.png)
 
 ## Table of Contents
 - [Functions](#functions)
