@@ -278,7 +278,7 @@ def create_bl_links(code_with_bl: dict) -> str:
                         bl_address = code_with_bl[key]['contents']['bl_addr']
                     else:
                         bl_address = (code_with_bl[str(code_with_bl[key]['contents']['bl_line'])]['contents']['base_addr'] 
-                        + 4*code_with_bl[str(code_with_bl[key]['contents']['bl_line'])]['contents']['bl_shift'])
+                        + 4*code_with_bl[key]['contents']['bl_shift'])
                     code_address = code_with_bl[key]['contents']['base_addr']
                     b_op = code_with_bl[key]['contents']['bl_type']
                     code_str = b_op + ' #' + hex(bl_address)

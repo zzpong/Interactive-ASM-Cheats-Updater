@@ -84,6 +84,7 @@ class ASM_updater_UI:
         get_pic(xcw_ico, 'xcw.ico')
         self.mainWin.iconbitmap("xcw.ico")
         self.mainWin.geometry('1400x800')
+        # self.mainWin.resizable(False, False)  # Debug: plugin will not shrink with window size
         os.remove("xcw.ico")
 
         # Load file frame
@@ -1449,9 +1450,7 @@ class ASM_updater_UI:
                     elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'ASM':
                         if not self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_bl']:  # not bl/branch
                             if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_code_cave']:
-                                current_out_text = ''
-                                for asm_code in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
-                                    current_out_text += ' '.join(asm_code) + '\n'
+                                current_out_text = self.generate_current_output(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents'])
                                 current_text_type = 'asm_cave_code'
                                 self.current_out(current_out_text, True)
                                 print(f'Before: {hex(self.code_cave[0])},{hex(self.code_cave[1])}')
