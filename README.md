@@ -46,7 +46,7 @@ If you need a Chinese version introduction, please refer [here](https://www.91tv
 
 ### Pre-Requisites
 
-* Windows 10 (:heavy_check_mark:), Windows 7 (:x:), Mac/Linux (❓)
+* Windows 10 (:heavy_check_mark:), Windows 7 (:x:), Mac/Linux (❓: rebuild required (thx to [Amuyea](https://gbatemp.net/members/amuyea.437000/)))
 * No python environment required
 
 ### Downloading
