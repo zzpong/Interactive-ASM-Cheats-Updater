@@ -125,7 +125,16 @@ Logs window has everything you need when updating cheat codes.
 3. Why this application repeating same title over and over again?
 
     A: It happened when capstone in the application failed to recognize bytes features. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool decompressing command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
+    
+4. What does "wing length" stand for?
 
+    A: "wing length" represents the number of code lines before and after the target area. Here is the diagram for a better view:
+    
+    ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/wing_length.png)
+
+5. What code cave remake brings between version 0.3 and 0.4?
+
+    A: In the new version, the code cave structure strictly follows the one from the original cheat code instead of previous "relocate every code cave automatically". Therefore, code caves in cheat codes like [EXP 2X]/[EXP 4X]/[EXP 8X] will only demand identical addresses and nothing more.
 
 ## Contributing
 
@@ -142,7 +151,7 @@ b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a l
 
 **Also thanks to:**
 
-[Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html) and [Geminize](https://www.91tvg.com/space-uid-2337434.html) for their testing.
+[Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html), [Geminize](https://www.91tvg.com/space-uid-2337434.html), [Konia1234](https://www.91tvg.com/space-uid-2300061.html) and [lulu](https://www.91tvg.com/space-uid-2776736.html) for their testing.
 
 All cheat makers that sparing no effort in writing and updating cheat codes, you ARE the true heros!
 
