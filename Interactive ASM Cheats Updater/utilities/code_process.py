@@ -62,6 +62,8 @@ def find_bytes_feature(bytes_file, address, wing_length):
         start_address = pre_address - wing_length[0] * 4
         end_address = post_address + wing_length[1] * 4
     asm_binarray = bytes_file[start_address : end_address]
+    if len(asm_binarray) == 0:
+        return 'NotMain'
 
     align_index = bytesarray_findall(asm_binarray, b"\x00\x00\x00\x00")
     align_prop = []
@@ -264,13 +266,13 @@ def get_ASM_code(bytes_file, addr_range):  # remove wing length for address over
     # return '\n'.join(msg)
     return msg
 
-def create_bl_links(code_with_bl: dict) -> str:
+def create_links(code_with_bl: dict) -> str:
     new_code_line = ''
     Assembler = Ks(KS_ARCH_ARM64, KS_MODE_LITTLE_ENDIAN)
     print(code_with_bl)
     for key in code_with_bl:
-        if code_with_bl[key]['contents']['is_shown']:
-            if code_with_bl[key]['code_type'] != 'Normal':
+        if code_with_bl[key]['code_type'] == 'ASM':
+            if code_with_bl[key]['contents']['is_shown']:
                 code_1st = code_with_bl[key]['contents']['code_head']
                 code_2nd = code_with_bl[key]['contents']['code_addr']
                 if code_with_bl[key]['contents']['is_bl']:
@@ -291,6 +293,91 @@ def create_bl_links(code_with_bl: dict) -> str:
                     code_3rd = code_with_bl[key]['contents']['code_main']
                 for index in range(len(code_1st)):
                     new_code_line += f'{code_1st[index].upper()} {code_2nd[index].upper()} {code_3rd[index].upper()}' + '\n'
-            else:
+        elif code_with_bl[key]['code_type'] == 'ASM_Normal':
+            code_1st = code_with_bl[key]['contents']['code_head']
+            code_2nd = deepcopy(code_with_bl[key]['contents']['code_addr'])  # or it will be a pointer that ruins everything
+            code_3rd = code_with_bl[key]['contents']['code_main']
+            if code_with_bl[key]['contents']['is_shown']:
+                asm_chosen = code_with_bl[key]['contents']['asm_chosen']
+                if asm_chosen is not None:
+                    if code_with_bl[key]['contents']['asm_loc'] == 'ahead':
+                        base_addr = code_with_bl[str(asm_chosen)]['contents']['base_addr'] + code_with_bl[key]['contents']['asm_dist']
+                    else:
+                        base_addr = code_with_bl[str(asm_chosen)]['contents']['base_addr'] - code_with_bl[key]['contents']['asm_dist']
+                        if base_addr < 0:
+                            base_addr = 0
+                    offset = base_addr - code_2nd[0]
+                for index in range(len(code_2nd)):
+                    code_2nd[index] = code_2nd[index] + offset
+            for index in range(len(code_1st)):
+                new_code_line += f'{code_1st[index].upper()} {hex(code_2nd[index])[2:].zfill(8).upper()} {code_3rd[index].upper()}' + '\n'
+        else:
+            if code_with_bl[key]['contents']['is_shown']:
                 new_code_line += code_with_bl[key]['contents']['code_raw'].upper() + '\n'
     return new_code_line + '\n'
+
+def update_normal_in_asm_links(cheat_code_dict: dict) -> dict:  # single cheat code function
+    for key in cheat_code_dict:
+        if cheat_code_dict[key]['code_type'] == 'Normal':
+            cheat_code_dict[key]['code_type'] = 'ASM_Normal'
+            asm_addr_ahead = None
+            asm_addr_after = None
+            asm_chosen_ahead = None
+            asm_chosen_after = None
+
+            for dkey in cheat_code_dict:
+                if cheat_code_dict[dkey]['code_type'] == 'ASM':
+                    if cheat_code_dict[key]['contents']['base_addr'] >= cheat_code_dict[dkey]['contents']['next_addr']:  # := for py3.9
+                        dist = cheat_code_dict[key]['contents']['base_addr'] - cheat_code_dict[dkey]['contents']['next_addr']
+                        if asm_addr_ahead is not None and dist >= asm_addr_ahead:
+                            pass
+                        else:
+                            asm_addr_ahead = dist
+                            code_length_ahead = cheat_code_dict[dkey]['contents']['next_addr'] - cheat_code_dict[dkey]['contents']['base_addr']
+                            asm_chosen_ahead = int(dkey)
+                        
+                    elif cheat_code_dict[key]['contents']['next_addr'] <= cheat_code_dict[dkey]['contents']['base_addr']:
+                        dist = cheat_code_dict[dkey]['contents']['base_addr'] - cheat_code_dict[key]['contents']['next_addr']
+                        if asm_addr_after is not None and dist >= asm_addr_after:
+                            pass
+                        else:
+                            asm_addr_after = dist
+                            code_length_after = cheat_code_dict[key]['contents']['next_addr'] - cheat_code_dict[key]['contents']['base_addr']
+                            asm_chosen_after = int(dkey)
+            if asm_addr_ahead is None and asm_addr_after is None:
+                cheat_code_dict[key]['contents'].update({
+                    'asm_loc': None,
+                    'asm_dist': None,
+                    'asm_chosen': None
+                })
+            elif asm_addr_after is None or asm_addr_ahead <= asm_addr_after:
+                cheat_code_dict[key]['contents'].update({
+                    'asm_loc': 'ahead',
+                    'asm_dist': asm_addr_ahead + code_length_ahead,
+                    'asm_chosen': asm_chosen_ahead
+                })
+            elif asm_addr_ahead is None or asm_addr_ahead > asm_addr_after:
+                cheat_code_dict[key]['contents'].update({
+                    'asm_loc': 'after',
+                    'asm_dist': asm_addr_after + code_length_after,
+                    'asm_chosen': asm_chosen_after
+                })       
+    return cheat_code_dict
+
+def check_and_update_code_cave(code_cave, request_code_cave):  # Tuple
+    status = 'NotFind'
+    new_code_cave = []
+    for cave in code_cave:
+        if request_code_cave[0] >= cave[0]:
+            if request_code_cave[1] <= cave[1]:
+                status = 'Find'
+                if request_code_cave[0] != cave[0]:
+                    new_code_cave.append([cave[0], request_code_cave[0]])
+                if request_code_cave[1] != cave[1]:
+                    new_code_cave.append([request_code_cave[1], cave[1]])
+            else:
+                status = 'OverFlow'
+                new_code_cave.append(cave)
+        else:
+            new_code_cave.append(cave)
+    return [new_code_cave, status]

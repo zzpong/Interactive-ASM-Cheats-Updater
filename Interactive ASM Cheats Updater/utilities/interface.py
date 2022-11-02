@@ -326,7 +326,7 @@ class ASM_updater_UI:
         self.asm_cache_json = {}
         self.bl_addr_and_target_addr = {}  # recorded in stage_detail_json
         self.bl_step = 0  # special inner step counts for asm part
-        self.code_cave = {}
+        self.code_cave = []
 
         self.mainWin.mainloop()
 
@@ -663,6 +663,7 @@ class ASM_updater_UI:
                 bl_to_outer = False
                 bl_offset_to_main = 0
                 bl_type = None
+                border_dist = None
                 Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
                 code_bytes = bytearray.fromhex(asm_code_main)
                 code_bytes.reverse()
@@ -672,6 +673,7 @@ class ASM_updater_UI:
                     if (asm_code_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
                     and asm_code_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
                         is_code_cave = True
+                        border_dist = asm_code_addr - int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
                     if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
                         is_bl = True
                         bl_type = i.mnemonic
@@ -690,6 +692,7 @@ class ASM_updater_UI:
                                 'code_type': 'ASM',
                                 'memory_width': 4,
                                 'is_code_cave': is_code_cave,
+                                'border_dist': border_dist,
                                 'is_bl': is_bl,
                                 'bl_type': bl_type,
                                 'bl_addr': jump_addr,
@@ -709,6 +712,10 @@ class ASM_updater_UI:
                             'contents': 
                             {
                                 'code_type': 'Normal',
+                                'memory_width': 4,
+                                'code_head': is_code[0],
+                                'code_addr': int(is_code[1], 16),
+                                'code_main': is_code[2],
                                 'code_raw': is_code
                             }
                     }
@@ -799,39 +806,74 @@ class ASM_updater_UI:
                     input_cheats_list = []
                     input_cheats_list_property = []
                 code_type = self.check_line(title_cache[-1])['type']
-                json_asm_combine_code_cache = {}
-                searching_next_flag = False
+                json_comb_code_cache = {}
+                slice_code = False
                 current_index = 0
                 for index in range(len(code_cache)):
                     code_json = self.check_line(code_cache[index])
 
-                    if code_json['contents']['code_type'] != 'ASM':
-                        if searching_next_flag == True:
-                            json_code_cache.update(json_asm_combine_code_cache)
-                            json_asm_combine_code_cache = {}
-                            searching_next_flag = False
-                        json_code_cache.update(
-                            {f'{index}': {
-                                'code_type': 'Normal',
-                                'contents':
-                                    {
-                                        'code_raw': code_cache[index]
+                    if bool(json_comb_code_cache):
+                        if json_comb_code_cache[f'{current_index}']['code_type'] != code_json['contents']['code_type']:
+                            slice_code = True
+                        elif code_json['contents']['code_type'] == 'Normal':
+                            if json_comb_code_cache[f'{current_index}']['contents']['next_addr'] != code_json['contents']['code_addr']:
+                                slice_code = True
+                        elif code_json['contents']['code_type'] == 'ASM':
+                            if not (json_comb_code_cache[f'{current_index}']['contents']['next_addr'] == code_json['contents']['code_addr'] 
+                                    and json_comb_code_cache[f'{current_index}']['contents']['is_code_cave'] == code_json['contents']['is_code_cave']
+                                    and not json_comb_code_cache[f'{current_index}']['contents']['is_bl']
+                                    and not code_json['contents']['is_bl']
+                                ):
+                                slice_code = True
+                        if slice_code:
+                            json_code_cache.update(json_comb_code_cache)
+                            json_comb_code_cache = {}
+                            slice_code = False
+                            current_index = 0
+
+                    if code_json['contents']['code_type'] == 'Normal':
+                        if not bool(json_comb_code_cache):
+                            json_comb_code_cache.update(
+                                {f'{index}': {
+                                    'code_type': 'Normal',
+                                    'contents':
+                                        {
+                                            'code_head': [code_json['contents']['code_head']],
+                                            'code_addr': [code_json['contents']['code_addr']],
+                                            'code_length': int(code_json['contents']['memory_width']),
+                                            'code_main': [code_json['contents']['code_main']],
+                                            'code_raw': [code_json['contents']['code_raw']],
+                                            'base_addr': code_json['contents']['code_addr'],
+                                            'next_addr': code_json['contents']['code_addr'] + int(code_json['contents']['memory_width'])
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                            current_index = index
+                        else:
+                            json_comb_code_cache[f'{current_index}']['contents']['code_head'].append(code_json['contents']['code_head'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_addr'].append(code_json['contents']['code_addr'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_length'] += int(code_json['contents']['memory_width'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_main'].append(code_json['contents']['code_main'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_raw'].append(code_json['contents']['code_raw'])
+                            json_comb_code_cache[f'{current_index}']['contents']['next_addr'] = (
+                                json_comb_code_cache[f'{current_index}']['contents']['next_addr'] +
+                                int(code_json['contents']['memory_width'])
+                            )
+
                     elif code_json['contents']['code_type'] == 'ASM':
                         has_asm_code = True
                         code = ''.join(code_json['contents']['code_main'])
                         code_bytes = bytearray.fromhex(code)
                         code_bytes.reverse()
-                        if searching_next_flag == False:
-                            json_asm_combine_code_cache.update(
+                        if not bool(json_comb_code_cache):
+                            json_comb_code_cache.update(
                                 {f'{index}': {
                                     'code_type': 'ASM',
                                     'contents':
                                         {
                                             'is_code_cave': code_json['contents']['is_code_cave'],
+                                            'border_dist': code_json['contents']['border_dist'],
                                             'is_bl': code_json['contents']['is_bl'],
                                             'bl_type': code_json['contents']['bl_type'],
                                             'bl_addr': code_json['contents']['bl_addr'],
@@ -851,59 +893,25 @@ class ASM_updater_UI:
                                     }
                                 }
                             )
-                            searching_next_flag = True
                             current_index = index
-                        elif (json_asm_combine_code_cache[f'{current_index}']['contents']['next_addr'] == code_json['contents']['code_addr'] 
-                        and json_asm_combine_code_cache[f'{current_index}']['contents']['is_code_cave'] == code_json['contents']['is_code_cave']
-                        and not json_asm_combine_code_cache[f'{current_index}']['contents']['is_bl']
-                        and not code_json['contents']['is_bl']
-                        ):
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['next_addr'] = (
-                                json_asm_combine_code_cache[f'{current_index}']['contents']['next_addr'] +
+                        else:
+                            json_comb_code_cache[f'{current_index}']['contents']['next_addr'] = (
+                                json_comb_code_cache[f'{current_index}']['contents']['next_addr'] +
                                 int(code_json['contents']['memory_width'])
                             )
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_bytes'] += code_bytes
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['offset'].append(code_json['contents']['memory_width'])
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_head'].append(code_json['contents']['code_head'])
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_addr'].append(code_json['contents']['code_addr'])
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_main'].append(code_json['contents']['code_main'])
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_disam'].append(code_json['contents']['code_disam'])
-                            json_asm_combine_code_cache[f'{current_index}']['contents']['code_raw'].append(code_json['contents']['code_raw'])
-                        else:
-                            json_code_cache.update(json_asm_combine_code_cache)
-                            json_asm_combine_code_cache = {}
-                            json_asm_combine_code_cache.update(
-                                {f'{index}': {
-                                    'code_type': 'ASM',
-                                    'contents':
-                                        {
-                                            'is_code_cave': code_json['contents']['is_code_cave'],
-                                            'is_bl': code_json['contents']['is_bl'],
-                                            'bl_type': code_json['contents']['bl_type'],
-                                            'bl_addr': code_json['contents']['bl_addr'],
-                                            'bl_to_cave': code_json['contents']['bl_to_cave'],
-                                            'bl_to_outer': code_json['contents']['bl_to_outer'],
-                                            'bl_offset_to_main': code_json['contents']['bl_offset_to_main'],
-                                            'base_addr': code_json['contents']['code_addr'],
-                                            'next_addr': code_json['contents']['code_addr'] + int(code_json['contents']['memory_width']),
-                                            'code_bytes': code_bytes,
-                                            'offset': [code_json['contents']['memory_width']],
-                                            'code_head': [code_json['contents']['code_head']],
-                                            'code_addr': [code_json['contents']['code_addr']],
-                                            'code_main': [code_json['contents']['code_main']],
-                                            'code_disam': [code_json['contents']['code_disam']],
-                                            'code_raw': [code_json['contents']['code_raw']]
-                                        }
-                                    }
-                                }
-                            )
-                            current_index = index
+                            json_comb_code_cache[f'{current_index}']['contents']['code_bytes'] += code_bytes
+                            json_comb_code_cache[f'{current_index}']['contents']['offset'].append(code_json['contents']['memory_width'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_head'].append(code_json['contents']['code_head'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_addr'].append(code_json['contents']['code_addr'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_main'].append(code_json['contents']['code_main'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_disam'].append(code_json['contents']['code_disam'])
+                            json_comb_code_cache[f'{current_index}']['contents']['code_raw'].append(code_json['contents']['code_raw'])
 
-                if searching_next_flag == True:
-                    json_code_cache.update(json_asm_combine_code_cache)
-                    json_asm_combine_code_cache = {}
-                    searching_next_flag = False
-                current_index = 0
+                if bool(json_comb_code_cache):
+                    json_code_cache.update(json_comb_code_cache)
+                    json_comb_code_cache = {}
+                    current_index = 0
+                
                 json_cache = {
                         f'{cheats_count}':
                             {
@@ -927,25 +935,30 @@ class ASM_updater_UI:
 
                 # record branch index for the new json
                 for key in json_cache[str(cheats_count)]['contents']['codes']:
-                    json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = None
-                    json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = 0
                     if json_cache[str(cheats_count)]['contents']['codes'][key]['code_type'] == 'ASM':
-                        if json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['is_bl']:
-                            bl_addr = json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_addr']
-                            has_bl_link = False
-                            for inner_key in json_cache[str(cheats_count)]['contents']['codes']:
-                                if json_cache[str(cheats_count)]['contents']['codes'][inner_key]['code_type'] == 'ASM':
-                                    if (bl_addr >= json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['base_addr'] and
-                                        bl_addr < json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['next_addr']):
-                                        bl_line = int(inner_key)
-                                        bl_shift = int((bl_addr - json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['base_addr'])/4)
-                                        json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = bl_line
-                                        json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = bl_shift
-                                        has_bl_link = True
-                                        break
-                            if not has_bl_link:
-                                json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = None
-                                json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = 0
+                        json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = None
+                        json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = 0
+                        if json_cache[str(cheats_count)]['contents']['codes'][key]['code_type'] == 'ASM':
+                            if json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['is_bl']:
+                                bl_addr = json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_addr']
+                                has_bl_link = False
+                                for inner_key in json_cache[str(cheats_count)]['contents']['codes']:
+                                    if json_cache[str(cheats_count)]['contents']['codes'][inner_key]['code_type'] == 'ASM':
+                                        if (bl_addr >= json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['base_addr'] and
+                                            bl_addr < json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['next_addr']):
+                                            bl_line = int(inner_key)
+                                            bl_shift = int((bl_addr - json_cache[str(cheats_count)]['contents']['codes'][inner_key]['contents']['base_addr'])/4)
+                                            json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = bl_line
+                                            json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = bl_shift
+                                            has_bl_link = True
+                                            break
+                                if not has_bl_link:
+                                    json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_line'] = None
+                                    json_cache[str(cheats_count)]['contents']['codes'][key]['contents']['bl_shift'] = 0
+
+                # mark normal_in_asm and add more information
+                if json_cache[str(cheats_count)]['contents']['has_asm_code']:
+                    json_cache[str(cheats_count)]['contents']['codes'] = update_normal_in_asm_links(json_cache[str(cheats_count)]['contents']['codes'])
 
                 cheats_script_json.update(json_cache)
                 cheats_count += 1
@@ -979,6 +992,9 @@ class ASM_updater_UI:
 
     def find_addr_re(self, addr_range, wing_length, wing_type):  # massive decrease search when no addr find is meaningless
         json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+        if json_bytes_feature == 'NotMain':
+            messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['Not Main Code'])))
+            return
         bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
         hit_start_addr = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature)
         if isinstance(wing_length, int):
@@ -1240,8 +1256,8 @@ class ASM_updater_UI:
                 self.btn_enable_after_cur_cheat_gen(True)
                 self.reset_wings()
                 if int.from_bytes(self.main_new_file.codeCaveEnd, byteorder='big', signed=False) > int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False):
-                    self.code_cave = [int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False),
-                    int.from_bytes(self.main_new_file.codeCaveEnd, byteorder='big', signed=False)]
+                    self.code_cave = [[int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False),
+                    int.from_bytes(self.main_new_file.codeCaveEnd, byteorder='big', signed=False)]]
                 else:
                     self.code_cave = None
 
@@ -1302,7 +1318,7 @@ class ASM_updater_UI:
                         self.bl_addr_and_target_addr[str(_bl_step)]['contents']['is_shown'] = is_shown
                         self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
                     
-                    if len(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['asm_cache_json']) == 0:
+                    if len(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['asm_cache_json']) == 0:  # post procedure
                         output_text_previous = self.output_cheats_text.get('1.0', END)
                         try:
                             code_start_index_master = output_text_previous.rindex('}')
@@ -1314,7 +1330,7 @@ class ASM_updater_UI:
                             code_start_index_normal = 0
                         code_start_index = max(code_start_index_master, code_start_index_normal) + 1
                         output_text_previous = output_text_previous[:(code_start_index+1)]
-                        new_code = create_bl_links(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+                        new_code = create_links(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
                         output_text_now = output_text_previous + new_code
                         self.output_out(output_text_now, True)
                         self.bl_step = 0
@@ -1333,6 +1349,7 @@ class ASM_updater_UI:
                     self.bl_addr_and_target_addr = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
                     _bl_step = self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_step'] - 1
                     if self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'asm_normal_code':
+                        self.output_out((self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['current_out_text'] + '\n').upper(), False)
                         is_shown = False
                         self.bl_addr_and_target_addr[list(self.bl_addr_and_target_addr)[-1]]['contents']['is_shown'] = is_shown
                         self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
@@ -1347,7 +1364,7 @@ class ASM_updater_UI:
                         self.bl_addr_and_target_addr[str(_bl_step)]['contents']['is_shown'] = is_shown
                         self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
                     
-                    if len(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['asm_cache_json']) == 0:
+                    if len(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['asm_cache_json']) == 0:  # post procedure
                         output_text_previous = self.output_cheats_text.get('1.0', END)
                         try:
                             code_start_index_master = output_text_previous.rindex('}')
@@ -1359,7 +1376,7 @@ class ASM_updater_UI:
                             code_start_index_normal = 0
                         code_start_index = max(code_start_index_master, code_start_index_normal) + 1
                         output_text_previous = output_text_previous[:(code_start_index+1)]
-                        new_code = create_bl_links(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
+                        new_code = create_links(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
                         output_text_now = output_text_previous + new_code
                         self.output_out(output_text_now, True)
                         self.bl_step = 0
@@ -1415,24 +1432,26 @@ class ASM_updater_UI:
                     self.reset_middle_ASM_state()
                     self.reset_wings()
                 elif len(self.asm_cache_json) != 0:
-                    if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'Normal':
+                    if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'ASM_Normal':
                         current_out_text = ''
-                        _bl_step = self.bl_step
-                        while len(self.asm_cache_json) != 0:
-                            if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'Normal':
-                                current_out_text += self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw'] + '\n'
-                                del self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]
-                                self.bl_step += 1
-                            else:
-                                break
+                        current_out_text_cache = ''
+
+                        for raw in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
+                            current_out_text_cache += f"{raw[0]} YYYYYYYY {raw[2]}\n"
+                        current_out_text += current_out_text_cache
                         current_out_text = current_out_text[:-1]
+
                         self.bl_addr_and_target_addr.update({
-                            str(_bl_step):
+                            str(self.bl_step):
                             {
-                                'code_type': 'Normal',
-                                'contents': {'code_raw': current_out_text}
+                                'code_type': 'ASM_Normal',
+                                'contents': {
+                                    'code_raw': current_out_text
+                                    }
                             }})
-                        
+                        self.bl_addr_and_target_addr[str(self.bl_step)]['contents'].update(deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']))
+                        self.bl_step += 1
+                        del self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]
                         if len(self.asm_cache_json) == 0:
                             current_out_text += '\n'
                         current_text_type = 'asm_normal_code'
@@ -1447,31 +1466,35 @@ class ASM_updater_UI:
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_code']))
                         self.log_out(log_out_text, True)
                         self.reset_middle_ASM_state()
+
                     elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'ASM':
                         if not self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_bl']:  # not bl/branch
                             if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['is_code_cave']:
                                 current_out_text = self.generate_current_output(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents'])
                                 current_text_type = 'asm_cave_code'
                                 self.current_out(current_out_text, True)
-                                print(f'Before: {hex(self.code_cave[0])},{hex(self.code_cave[1])}')
                                 
                                 _asm_cache_json = deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))])
                                 is_generate_button_discard = False
                                 if self.code_cave == None:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_cave_code_no_cave']))
-                                elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) > self.code_cave[1]:
-                                    is_generate_button_discard = True
-                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_cave_code_no_space']))
-                                elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) <= self.code_cave[1]:
-                                    code_cave_addr = '0x' + hex(self.code_cave[0])[2:].zfill(8).upper()
-                                    _asm_cache_json['contents']['base_addr'] = self.code_cave[0]
-                                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                        _asm_cache_json['contents']['code_addr'][_index] = hex(self.code_cave[0])[2:].zfill(8).upper()
-                                        self.code_cave[0] += _asm_cache_json['contents']['offset'][_index]
-                                    _asm_cache_json['contents']['next_addr'] = self.code_cave[0]
-                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_cave_code_has_space']))
-                                print(f'After: {hex(self.code_cave[0])},{hex(self.code_cave[1])}')
+                                else:
+                                    _code_cave_start = int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False) + _asm_cache_json['contents']['border_dist']
+                                    _code_cave_end = _code_cave_start + sum(_asm_cache_json['contents']['offset'])
+                                    [_code_cave, _status] = check_and_update_code_cave(deepcopy(self.code_cave), [_code_cave_start, _code_cave_end])
+                                    if _status == 'OverFlow' or _status == 'NotFind':
+                                        is_generate_button_discard = True
+                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_cave_code_no_space']))
+                                    elif _status == 'Find':
+                                        code_cave_addr = '0x' + hex(_code_cave_start)[2:].zfill(8).upper()
+                                        _asm_cache_json['contents']['base_addr'] = _code_cave_start
+                                        for _index in range(len(_asm_cache_json['contents']['offset'])):
+                                            _asm_cache_json['contents']['code_addr'][_index] = hex(_code_cave_start)[2:].zfill(8).upper()
+                                            _code_cave_start += _asm_cache_json['contents']['offset'][_index]
+                                        _asm_cache_json['contents']['next_addr'] = _code_cave_end
+                                        self.code_cave = deepcopy(_code_cave)
+                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_cave_code_has_space']))
                                 self.bl_addr_and_target_addr.update({str(self.bl_step):_asm_cache_json})
                                 self.bl_step += 1
                                 del self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]
@@ -1550,56 +1573,64 @@ class ASM_updater_UI:
                                     is_generate_button_discard = True
                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_cave']))
                                     self.reset_middle_ASM_state()
-                                elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) > self.code_cave[1]:
-                                    is_generate_button_discard = True
-                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
-                                    self.reset_middle_ASM_state()
-                                elif self.code_cave[0] + sum(_asm_cache_json['contents']['offset']) <= self.code_cave[1]:
-                                    code_cave_addr = '0x' + hex(self.code_cave[0])[2:].zfill(8).upper()
-                                    _asm_cache_json['contents']['base_addr'] = self.code_cave[0]
-                                    for _index in range(len(_asm_cache_json['contents']['offset'])):
-                                        _asm_cache_json['contents']['code_addr'][_index] = hex(self.code_cave[0])[2:].zfill(8).upper()
-                                        self.code_cave[0] += _asm_cache_json['contents']['offset'][_index]
-                                    _asm_cache_json['contents']['next_addr'] = self.code_cave[0]
-                                    if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is not None:
-                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_has_space']))
+
+                                else:
+                                    _code_cave_start = int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False) + _asm_cache_json['contents']['border_dist']
+                                    _code_cave_end = _code_cave_start + sum(_asm_cache_json['contents']['offset'])
+                                    [_code_cave, _status] = check_and_update_code_cave(deepcopy(self.code_cave), [_code_cave_start, _code_cave_end])
+
+                                    if _status == 'OverFlow' or _status == 'NotFind':
+                                        is_generate_button_discard = True
+                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
                                         self.reset_middle_ASM_state()
-                                    else:
-                                        if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_outer'] == True:
-                                            is_generate_button_discard = True
-                                            log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_outer']))
+                                    elif _status == 'Find':
+                                        code_cave_addr = '0x' + hex(_code_cave_start)[2:].zfill(8).upper()
+                                        _asm_cache_json['contents']['base_addr'] = _code_cave_start
+                                        for _index in range(len(_asm_cache_json['contents']['offset'])):
+                                            _asm_cache_json['contents']['code_addr'][_index] = hex(_code_cave_start)[2:].zfill(8).upper()
+                                            _code_cave_start += _asm_cache_json['contents']['offset'][_index]
+                                        _asm_cache_json['contents']['next_addr'] = _code_cave_end
+                                        if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is not None:
+                                            log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_has_space']))
+                                            self.code_cave = deepcopy(_code_cave)
                                             self.reset_middle_ASM_state()
-                                        elif (self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_cave'] == True and
-                                            self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None):
-                                            is_generate_button_discard = True
-                                            log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_cave']))
-                                            self.reset_middle_ASM_state()
-                                        elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None:
-                                            bl_target_hit_start_addr = []
-                                            bl_target_wing_length = self.check_wings()
-                                            bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
-                                            bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
-                                            if len(bl_target_hit_start_addr_str) == 0:
-                                                log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
+                                        else:
+                                            if self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_outer'] == True:
+                                                is_generate_button_discard = True
+                                                log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_outer']))
                                                 self.reset_middle_ASM_state()
-                                            else:
-                                                if len(bl_target_hit_start_addr) > 1:
-                                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_multi_addr']))
+                                            elif (self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_to_cave'] == True and
+                                                self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None):
+                                                is_generate_button_discard = True
+                                                log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_to_cave']))
+                                                self.reset_middle_ASM_state()
+                                            elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None:
+                                                bl_target_hit_start_addr = []
+                                                bl_target_wing_length = self.check_wings()
+                                                bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
+                                                bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
+                                                if len(bl_target_hit_start_addr_str) == 0:
+                                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
+                                                    self.reset_middle_ASM_state()
                                                 else:
-                                                    log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_single_addr']))
-                                                
-                                                _asm_cache_json['contents'].update(
-                                                {
-                                                    'org_addr': None,
-                                                    'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
-                                                    'hit_addr': [],
-                                                    'addr_chosen': None,
-                                                    'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
-                                                    'bl_target_addr_chosen': 0,
-                                                    'wing_length': None,
-                                                    'bl_target_wing_length': deepcopy(self.check_wings())  # fetch new wing_length
-                                                })
-                                                _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
+                                                    self.code_cave = deepcopy(_code_cave)
+                                                    if len(bl_target_hit_start_addr) > 1:
+                                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_multi_addr']))
+                                                    else:
+                                                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_single_addr']))
+                                                    
+                                                    _asm_cache_json['contents'].update(
+                                                    {
+                                                        'org_addr': None,
+                                                        'bl_org_addr': [_asm_cache_json['contents']['bl_addr'], _asm_cache_json['contents']['bl_addr']+4],
+                                                        'hit_addr': [],
+                                                        'addr_chosen': None,
+                                                        'bl_target_hit_addr': deepcopy(bl_target_hit_start_addr),
+                                                        'bl_target_addr_chosen': 0,
+                                                        'wing_length': None,
+                                                        'bl_target_wing_length': deepcopy(self.check_wings())  # fetch new wing_length
+                                                    })
+                                                    _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
 
                             else:  # bl in main code
                                 current_text_type = 'asm_bl_code'
@@ -1819,19 +1850,24 @@ class ASM_updater_UI:
                         is_generate_button_discard = True
                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_cave']))
                         self.reset_middle_ASM_state()
-                    elif _code_cave[0] + sum(_asm_cache_json['contents']['offset']) > _code_cave[1]:
-                        is_generate_button_discard = True
-                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
-                        self.reset_middle_ASM_state()
-                    elif _code_cave[0] + sum(_asm_cache_json['contents']['offset']) <= _code_cave[1]:
-                        code_cave_addr = '0x' + hex(_code_cave[0])[2:].zfill(8).upper()  # only for log message
-                        _asm_cache_json['contents']['base_addr'] = _code_cave[0]
-                        for _index in range(len(_asm_cache_json['contents']['offset'])):
-                            _asm_cache_json['contents']['code_addr'][_index] = hex(_code_cave[0])[2:].zfill(8).upper()
-                            _code_cave[0] += _asm_cache_json['contents']['offset'][_index]
-                            _asm_cache_json['contents']['next_addr'] = _code_cave[0]
+                    else:
+                        _code_cave_start = int.from_bytes(self.main_new_file.codeCaveStart, byteorder='big', signed=False) + _asm_cache_json['contents']['border_dist']
+                        _code_cave_end = _code_cave_start + sum(_asm_cache_json['contents']['offset'])
+                        [_code_cave_cache, _status] = check_and_update_code_cave(deepcopy(_code_cave), [_code_cave_start, _code_cave_end])
+                        if _status == 'OverFlow' or _status == 'NotFind':
+                            is_generate_button_discard = True
+                            log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_space']))
+                            self.reset_middle_ASM_state()
+                        elif _status == 'Find':
+                            code_cave_addr = '0x' + hex(_code_cave_start)[2:].zfill(8).upper()  # only for log message
+                            _asm_cache_json['contents']['base_addr'] = _code_cave_start
+                            for _index in range(len(_asm_cache_json['contents']['offset'])):
+                                _asm_cache_json['contents']['code_addr'][_index] = hex(_code_cave_start)[2:].zfill(8).upper()
+                                _code_cave_start += _asm_cache_json['contents']['offset'][_index]
+                                _asm_cache_json['contents']['next_addr'] = _code_cave_end
                             if cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is not None:
                                 log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_has_space']))
+                                self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'] = deepcopy(_code_cave_cache)
                                 self.reset_middle_ASM_state()
                             else:
                                 if cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_to_outer'] == True:
@@ -1852,6 +1888,7 @@ class ASM_updater_UI:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
                                         self.reset_middle_ASM_state()
                                     else:
+                                        self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'] = deepcopy(_code_cave_cache)
                                         if len(bl_target_hit_start_addr) > 1:
                                             log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_multi_addr']))
                                         else:
@@ -1868,8 +1905,7 @@ class ASM_updater_UI:
                                             'bl_target_wing_length': deepcopy(self.check_wings())  # fetch new wing_length
                                         })
                                         _asm_cache_json = deepcopy(self.update_middle_ASM_output(_asm_cache_json, 0))
-                                self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'] = deepcopy(_code_cave)
-                else:  # bl in main code, bl to exist cave code or cheat code will process in create_bl_links()
+                else:  # bl in main code, bl to exist cave code or cheat code will process in create_links()
                     hit_start_addr = []
                     wing_length = self.check_wings()
 
@@ -2025,7 +2061,7 @@ class ASM_updater_UI:
                     self.is_asm_finished = True
                     self.bl_step = 0
                     self.bl_addr_and_target_addr = {}
-                    self.code_cave = self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave']
+                    self.code_cave = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'])
                 elif (self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_normal_code' or
                     self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_cave_code' or
                     self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_normal_asm_code'or
@@ -2037,7 +2073,6 @@ class ASM_updater_UI:
                     self.bl_step = self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_step']
                     self.bl_addr_and_target_addr = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'])
                     self.code_cave = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'])
-                print(f'Undo: {hex(self.code_cave[0])},{hex(self.code_cave[1])}')
                 pop_obj = self.stage_detail_json['step'][str(self.step)]
                 self.current_out(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['raw'], True)
                 self.log_out(self.stage_detail_json['step'][str(self.step-1)]['log_out_text'], True)
@@ -2057,7 +2092,7 @@ class ASM_updater_UI:
         self.asm_cache_json = {}
         self.bl_addr_and_target_addr = {}
         self.bl_step = 0
-        self.code_cave = {}
+        self.code_cave = []
         
         self.log_text.config(state=NORMAL)
         self.log_text.delete(0.1, END)
