@@ -124,7 +124,7 @@ Logs window has everything you need when updating cheat codes.
 
 3. Why this application repeating same title over and over again?
 
-    A: It happened when capstone in the application failed to recognize bytes features. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool decompressing command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new).
+    A: It happened when capstone in the application failed to recognize bytes features. Here are some major reasons: zero gap in bytes file fail to work in capstone (fixed), nsnsotool decompressing command failed (fixed), application folder structure destroyed. Please re-download this application or [create an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new). Please note that "out of .text or code cave border" has been fixed from 0.4.0.
     
 4. What does "wing length" stand for?
 
@@ -135,6 +135,10 @@ Logs window has everything you need when updating cheat codes.
 5. What code cave remake brings between version 0.3 and 0.4?
 
     A: In the new version, the code cave structure strictly follows the one from the original cheat code instead of previous "relocate every code cave automatically". Therefore, code caves in cheat codes like [EXP 2X]/[EXP 4X]/[EXP 8X] will only demand identical addresses and nothing more.
+
+6. I have fully run the program and never see any warning, but still no luck. Why?
+
+    A: In most cases, the "master code" which has a title within "{}" takes the responsibility. Some code creater prefer use them as "default function that should run with the game start". These codes and some non "master code" titled like "recovery code" always have links with other ASM codes like "BL #0xADDR". Please add these code contents to other parts of the cheat codes and run the program again.
 
 ## Contributing
 
