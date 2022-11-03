@@ -138,7 +138,7 @@ Logs window has everything you need when updating cheat codes.
 
 6. I have fully run the program and never see any warning, but still no luck. Why?
 
-    A: In most cases, the "master code" which has a title within "{}" takes the responsibility. Some code creater prefer use them as "default function that should run with the game start". These codes and some non "master code" titled like "recovery code" always have links with other ASM codes like "BL #0xADDR". Please add these code contents to other parts of the cheat codes and run the program again.
+    A: In most cases, the "master code" which has a title within "{}" takes the responsibility. Some code creater prefer use them as "default function that should run with the game start". These codes and some non "master code" titled like "recovery code" always have links with other ASM codes like "BL #0xADDR". Please add these code contents to other parts of the cheat codes that don't work properly and run the program again.
 
 ## Contributing
 
