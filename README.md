@@ -157,7 +157,7 @@ b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a l
 
 [Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/), [donghui2199](https://github.com/FantasyDH), [怪盗B](https://www.91tvg.com/space-uid-2230670.html), [Geminize](https://www.91tvg.com/space-uid-2337434.html), [Konia1234](https://www.91tvg.com/space-uid-2300061.html) and [lulu](https://www.91tvg.com/space-uid-2776736.html) for their testing.
 
-All cheat makers that sparing no effort in writing and updating cheat codes, you ARE the true heros!
+All cheat makers that sparing no effort in creating and updating cheat codes, you ARE the true heros!
 
 All the helpers for bringing this project to life!
 
