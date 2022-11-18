@@ -11,6 +11,7 @@ from tkinter import dialog, filedialog
 from sources.memory_pic import *
 from utilities.code_process import *
 from utilities.main_file import *
+from config.config import extra_code_pattern
 
 def get_pic(pic_code, pic_name):
     image = open(pic_name, 'wb')
@@ -137,7 +138,7 @@ class ASM_updater_UI:
         self.input_cheats_script = tkinter.Label(self.input_cheats_frame, text=self.loc_hints_map['Copy old cheats here:'])
         self.input_cheats_script.pack(expand='yes', fill='y', anchor='w', side='top', padx=5, pady=5)
         # Input cheats text
-        self.input_cheats_text = ScrolledText(self.input_cheats_frame, width=40, height=400)
+        self.input_cheats_text = ScrolledText(self.input_cheats_frame, width=40, height=400, wrap=WORD)
         self.input_cheats_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
 
         # Middle cheats frame
@@ -152,7 +153,7 @@ class ASM_updater_UI:
         self.current_cheats_script = tkinter.Label(self.middle_cheats_up_frame, text=self.loc_hints_map['Current processing cheat:'])
         self.current_cheats_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Current cheats text
-        self.current_cheats_text = ScrolledText(self.middle_cheats_up_frame, width=40, height=20, state=DISABLED)
+        self.current_cheats_text = ScrolledText(self.middle_cheats_up_frame, width=40, height=20, state=DISABLED, wrap=WORD)
         self.current_cheats_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
 
         # Middle cheats wings frame
@@ -195,7 +196,7 @@ class ASM_updater_UI:
         self.log_script = tkinter.Label(self.middle_cheats_down_frame, text=self.loc_hints_map['Logs:'])
         self.log_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Log text
-        self.log_text = ScrolledText(self.middle_cheats_down_frame, width=40, height=20, state=DISABLED)
+        self.log_text = ScrolledText(self.middle_cheats_down_frame, width=40, height=20, state=DISABLED, wrap=WORD)
         self.log_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
     
         # Middle ASM frame
@@ -210,7 +211,7 @@ class ASM_updater_UI:
         self.old_ASM_script = tkinter.Label(self.middle_ASM_up_frame, text=self.loc_hints_map['Old Main ASM:'])
         self.old_ASM_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Old ASM script
-        self.old_ASM_text = ScrolledText(self.middle_ASM_up_frame, width=40, height=20, state=DISABLED)
+        self.old_ASM_text = ScrolledText(self.middle_ASM_up_frame, width=40, height=20, state=DISABLED, wrap=WORD)
         self.old_ASM_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
         self.old_ASM_text.tag_config('high_light_old', foreground='red', background='yellow')
 
@@ -255,7 +256,7 @@ class ASM_updater_UI:
         self.new_ASM_script = tkinter.Label(self.middle_ASM_down_frame, text=self.loc_hints_map['New Main ASM:'])
         self.new_ASM_script.pack(anchor='w', side='top', padx=5, pady=5)
         # New ASM script
-        self.new_ASM_text = ScrolledText(self.middle_ASM_down_frame, width=40, height=20, state=DISABLED)
+        self.new_ASM_text = ScrolledText(self.middle_ASM_down_frame, width=40, height=20, state=DISABLED, wrap=WORD)
         self.new_ASM_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
         self.new_ASM_text.tag_config('high_light_new', foreground='red', background='yellow')
 
@@ -271,7 +272,7 @@ class ASM_updater_UI:
         self.output_cheats_script = tkinter.Label(self.output_cheats_up_frame, text=self.loc_hints_map['New cheats will be here:'])
         self.output_cheats_script.pack(anchor='w', side='top', padx=5, pady=5)
         # Output cheats text
-        self.output_cheats_text = ScrolledText(self.output_cheats_up_frame, width=40, height=38, state=DISABLED)
+        self.output_cheats_text = ScrolledText(self.output_cheats_up_frame, width=40, height=38, state=DISABLED, wrap=WORD)
         self.output_cheats_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
 
         # Output cheats down frame
@@ -709,7 +710,7 @@ class ASM_updater_UI:
                 else:
                     return {
                             'type': 'code',
-                            'contents': 
+                            'contents':  # Warning: only code with three part will not trigger "except" of "generate_cheats_script_json"
                             {
                                 'code_type': 'Normal',
                                 'memory_width': 4,
@@ -720,17 +721,32 @@ class ASM_updater_UI:
                             }
                     }
             else:
-                return {
-                    'type': 'code',
-                    'contents': 
-                    {
-                        'code_type': 'Normal',
-                        'code_raw': is_code
+                is_extra_code_pattern = False
+                for key in extra_code_pattern:
+                    if len(is_code) == extra_code_pattern[key]["code_length"]:
+                        pattern = re.compile(eval(extra_code_pattern[key]["pattern"]), re.I)
+                        if pattern.match(eval(extra_code_pattern[key]["pattern_match"])) is not None:
+                            is_extra_code_pattern = True
+                            contents = {}
+                            for inner_key in extra_code_pattern[key]["contents"]:
+                                contents.update({inner_key: eval(extra_code_pattern[key]["contents"][inner_key])})                           
+                if is_extra_code_pattern:  # Warning: extra code pattern will merge with ASM code above in the future version, Normal -> CodeUnknown
+                    return {
+                        'type': 'code',
+                        'contents': contents
                     }
-                }
+                else:
+                    return {
+                        'type': 'code',
+                        'contents': 
+                        {
+                            'code_type': 'Normal',
+                            'code_raw': is_code
+                        }
+                    }
         else:
             return {
-                'type': 'unknown',
+                'type': 'Unknown',
                 'contents': cheat_line
             }
 
@@ -741,7 +757,7 @@ class ASM_updater_UI:
         input_cheats_list = re.split('\n', self.input_cheats_text.get('1.0', END))
         input_cheats_list = [i for i in input_cheats_list if (not i.isspace() and i != '')]
         for line in input_cheats_list[::-1]:
-            if self.check_line(line)['type'] == 'unknown':
+            if self.check_line(line)['type'] == 'Unknown':
                 if not (line.isspace() or line ==''):
                     messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['Unknown cheat format'])))
                 input_cheats_list.remove(line)
@@ -906,6 +922,25 @@ class ASM_updater_UI:
                             json_comb_code_cache[f'{current_index}']['contents']['code_main'].append(code_json['contents']['code_main'])
                             json_comb_code_cache[f'{current_index}']['contents']['code_disam'].append(code_json['contents']['code_disam'])
                             json_comb_code_cache[f'{current_index}']['contents']['code_raw'].append(code_json['contents']['code_raw'])
+
+                    elif code_json['contents']['code_type'] == 'Extra':
+                        json_comb_code_cache.update(
+                            {f'{index}': {
+                                'code_type': 'Extra',
+                                'contents':
+                                    {
+                                        'code_func': code_json['contents']['code_func'],
+                                        'code_regen': code_json['contents']['code_regen'],
+                                        'code_head': [code_json['contents']['code_head']],
+                                        'code_addr': [code_json['contents']['code_addr']],
+                                        'code_main': [code_json['contents']['code_main']],
+                                        'code_raw': [code_json['contents']['code_raw']]
+                                    }
+                                }
+                            }
+                        )
+                        json_code_cache.update(json_comb_code_cache)
+                        json_comb_code_cache = {}
 
                 if bool(json_comb_code_cache):
                     json_code_cache.update(json_comb_code_cache)
@@ -1280,6 +1315,10 @@ class ASM_updater_UI:
                         self.output_out((self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['current_out_text'] + '\n').upper(), False)
                         self.bl_addr_and_target_addr[list(self.bl_addr_and_target_addr)[-1]]['contents']['is_shown'] = is_shown
                         self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
+                    elif self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'extra_code':
+                        self.output_out((self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['current_out_text'] + '\n').upper(), False)
+                        self.bl_addr_and_target_addr[list(self.bl_addr_and_target_addr)[-1]]['contents']['is_shown'] = is_shown
+                        self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
                     elif (self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'asm_cave_code'
                         or self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'asm_normal_asm_code'):
                         if not self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['is_generate_button_discard']:
@@ -1353,6 +1392,10 @@ class ASM_updater_UI:
                         is_shown = False
                         self.bl_addr_and_target_addr[list(self.bl_addr_and_target_addr)[-1]]['contents']['is_shown'] = is_shown
                         self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
+                    elif self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'extra_code':
+                        is_shown = False
+                        self.bl_addr_and_target_addr[list(self.bl_addr_and_target_addr)[-1]]['contents']['is_shown'] = is_shown
+                        self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['bl_addr_and_target_addr'] = deepcopy(self.bl_addr_and_target_addr)
                     elif (self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'asm_cave_code'
                         or self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['type'] == 'asm_normal_asm_code'):
                         is_shown = False
@@ -1395,12 +1438,17 @@ class ASM_updater_UI:
                 self.stage += 1
             elif not self.stage_detail_json['processed'][str(self.stage)]['contents']['has_asm_code']:  # code but no asm (master code equals code here)
                 current_text_type = 'normal_code'
-                code_cache = []
-                for index in range(len(self.stage_detail_json['processed'][str(self.stage)]['contents']['codes'])):
-                    code_cache.append(self.stage_detail_json['processed'][str(self.stage)]['contents']['codes'][str(index)]['contents']['code_raw'])
+                code_text = ''
+                code_content = self.stage_detail_json['processed'][str(self.stage)]['contents']['codes']
+                for key in code_content:
+                    code_text_cache = ''
+                    for content in code_content[key]['contents']['code_raw']:
+                        code_text_cache += ' '.join(content) + '\n'
+                    code_text += code_text_cache
+
                 current_out_json = {
                     'title': '\n'.join(self.stage_detail_json['processed'][str(self.stage)]['contents']['title']),
-                    'codes': '\n'.join(code_cache),
+                    'codes': code_text[:-1],
                     'code_cave': deepcopy(self.code_cave)
                 }
                 current_out_text = current_out_json['title'] + '\n' + current_out_json['codes']
@@ -1463,7 +1511,48 @@ class ASM_updater_UI:
                             'code_cave': deepcopy(self.code_cave)
                         }
                         self.current_out(current_out_text, True)
-                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_code']))
+                        log_out_text = '\n'.join(eval(self.loc_msg_map['asm_normal_code']))  # TODO: is current_text_type
+                        self.log_out(log_out_text, True)
+                        self.reset_middle_ASM_state()
+
+                    elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['code_type'] == 'Extra':
+                        current_out_text = ''
+                        current_out_text_cache = ''
+
+                        code_regen = self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_regen']
+                        extra_type = self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_func']
+
+                        for raw in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
+                            inner_raw_cache = ''
+                            for inner_raw in raw:
+                                inner_raw_cache += inner_raw
+                            current_out_text_cache += f"{inner_raw_cache}\n"
+                        current_out_text += current_out_text_cache
+                        current_out_text = current_out_text[:-1]
+
+                        self.bl_addr_and_target_addr.update({
+                            str(self.bl_step):
+                            {
+                                'code_type': 'Extra',
+                                'contents': {
+                                    'code_raw': current_out_text
+                                    }
+                            }})
+                        self.bl_addr_and_target_addr[str(self.bl_step)]['contents'].update(deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']))
+                        self.bl_step += 1
+                        del self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]
+                        if len(self.asm_cache_json) == 0:
+                            current_out_text += '\n'
+                        current_text_type = 'extra_code'
+                        current_out_json = {
+                            'current_out_text': current_out_text,
+                            'asm_cache_json': deepcopy(self.asm_cache_json),
+                            'bl_addr_and_target_addr': deepcopy(self.bl_addr_and_target_addr),
+                            'bl_step': self.bl_step,
+                            'code_cave': deepcopy(self.code_cave)
+                        }
+                        self.current_out(current_out_text, True)
+                        log_out_text = '\n'.join(eval(self.loc_msg_map[str(extra_type)]))
                         self.log_out(log_out_text, True)
                         self.reset_middle_ASM_state()
 
@@ -2062,7 +2151,8 @@ class ASM_updater_UI:
                     self.bl_step = 0
                     self.bl_addr_and_target_addr = {}
                     self.code_cave = deepcopy(self.stage_detail_json['step'][str(self.step-1)]['current_out_text']['contents']['code_cave'])
-                elif (self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_normal_code' or
+                elif (self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'extra_code' or
+                    self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_normal_code' or
                     self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_cave_code' or
                     self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_normal_asm_code'or
                     self.stage_detail_json['step'][str(self.step)]['current_out_text']['type'] == 'asm_bl_code' or

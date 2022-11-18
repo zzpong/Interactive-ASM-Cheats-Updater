@@ -313,7 +313,10 @@ def create_links(code_with_bl: dict) -> str:
                 new_code_line += f'{code_1st[index].upper()} {hex(code_2nd[index])[2:].zfill(8).upper()} {code_3rd[index].upper()}' + '\n'
         else:
             if code_with_bl[key]['contents']['is_shown']:
-                new_code_line += code_with_bl[key]['contents']['code_raw'].upper() + '\n'
+                for content in code_with_bl[key]['contents']['code_raw']:
+                    new_code_line += ' '.join(content) + '\n'
+                new_code_line = new_code_line.upper()
+
     return new_code_line + '\n'
 
 def update_normal_in_asm_links(cheat_code_dict: dict) -> dict:  # single cheat code function
