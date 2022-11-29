@@ -730,17 +730,26 @@ class ASM_updater_UI:
                             contents = {}
                             for inner_key in extra_code_pattern[key]["contents"]:
                                 contents.update({inner_key: eval(extra_code_pattern[key]["contents"][inner_key])})                           
-                if is_extra_code_pattern:  # Warning: extra code pattern will merge with ASM code above in the future version, Normal -> CodeUnknown
+                if is_extra_code_pattern:  # Finished: extra code pattern will merge with ASM code above in the future version, Normal -> CodeUnknown
                     return {
                         'type': 'code',
                         'contents': contents
                     }
                 else:
+                    code_head = is_code[0]
+                    code_addr = int(is_code[1], 16) if len(is_code) == 3 else None  # code with two parts contains no address
+                    code_main = is_code[2] if len(is_code) == 3 else None
                     return {
                         'type': 'code',
                         'contents': 
                         {
-                            'code_type': 'Normal',
+                            'code_type': 'Extra',
+                            'code_func': 'Code Unknown',
+                            'code_regen': True,
+                            'memory_width': 0,
+                            'code_head': code_head,
+                            'code_addr': code_addr,
+                            'code_main': code_main,
                             'code_raw': is_code
                         }
                     }
@@ -1523,9 +1532,7 @@ class ASM_updater_UI:
                         extra_type = self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_func']
 
                         for raw in self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['code_raw']:
-                            inner_raw_cache = ''
-                            for inner_raw in raw:
-                                inner_raw_cache += inner_raw
+                            inner_raw_cache = ' '.join(raw)
                             current_out_text_cache += f"{inner_raw_cache}\n"
                         current_out_text += current_out_text_cache
                         current_out_text = current_out_text[:-1]
