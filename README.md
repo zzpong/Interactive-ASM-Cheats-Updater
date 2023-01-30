@@ -28,6 +28,8 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Update game cheats to other locales (if they don't rewrite the game code, then yes)
+- [x] ARM64/ARM32 cheat codes update with automatic sorting
+- [x] XCZ/XCI/NSP/NSZ game packages auto extraction
 - [x] Search the whole main file for code features
 - [x] Update normal ASM codes
 - [x] Update code cave codes
@@ -55,12 +57,12 @@ Visit out [releases](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/re
 
 ### Usage
 
-#### Dump main file from xci/nsp/nsz game/updates
+#### Dump main file from xci/nsp/nsz game/updates (required only if version < 0.5.0)
 There are lots of excellent works for you to dump the main file, like [hactool](https://github.com/SciresM/hactool) and [NSC_Builder](https://github.com/julesontheroad/NSC_BUILDER). Please choose anyone you familiar with to dump two main files:
 * **Old Main File**: dump from the game which old cheat runs on
 * **New main File**: dump from the game which you want to update the old cheat to
 
-#### Load main file and copy cheat codes
+#### Load main file and copy cheat codes (or load the gamepackages (super ones excluded) directly if version > 0.5.0)
 Build ID of the old main file will be shown after loading. Please make sure it is the same with the old cheat.
 
 #### Interactively updating the cheat codes
@@ -152,6 +154,12 @@ Feel free to dive in! [Open an issue](https://github.com/zzpong/Interactive-ASM-
 a.) [Keystone Engine](https://github.com/keystone-engine/keystone) and [Capstone Engine](https://github.com/capstone-engine/capstone): Without their brilliant work, Interactive ASM Cheats Updater will never be born.
 
 b.) [nsnsotool](https://github.com/0CBH0/nsnsotool): This tiny program helps a lot on transforming nso files, made by 0CBH0.
+
+c.) [nsz](https://github.com/nicoboss/nsz): Light my day, created by nicoboss.
+
+d.) getMain: main file extraction for IDA Pro by [Eiffel2018](https://gbatemp.net/members/eiffel2018.536592/).
+
+e.) python AES128 implementation: written by SciresM.
 
 **Also thanks to:**
 
