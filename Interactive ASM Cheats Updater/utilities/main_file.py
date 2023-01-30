@@ -1,7 +1,8 @@
 import os, json
 from typing import Optional
 
-class Main_File:   
+
+class Main_File:  # parse header
     def __init__(self, file_name) -> None:
         self.Magic = ''
         self.Flags = bytearray(4)
@@ -73,7 +74,6 @@ class Main_File:
         buf = bytearray(os.path.getsize(self.fileName))
         with open(self.fileName, 'rb') as fp:
             fp.readinto(buf)
-        offset = 0
         offset = 0
         self.Magic = buf[4*offset : 4+4*offset].decode('unicode_escape')
         if self.Magic == 'NSO0':

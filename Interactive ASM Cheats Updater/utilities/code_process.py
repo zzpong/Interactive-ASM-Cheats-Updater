@@ -48,7 +48,7 @@ def bytesarray_escape(bytes_array) -> bytearray:
         byte_cache = b"\\("
     return byte_cache
 
-def find_bytes_feature(bytes_file, address, wing_length):
+def find_bytes_feature(bytes_file, address, wing_length, asm_type = 'arm64'):
     if isinstance(address, list):
         pre_address = address[0]
         post_address = address[1]
@@ -133,9 +133,11 @@ def find_bytes_feature(bytes_file, address, wing_length):
         "bytes_feature": "",
         "original_codes": {}
     }
-    Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    if asm_type == 'arm64':
+        Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    elif asm_type == 'arm32':
+        Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
     bytes_feature = bytearray()
-    print(bytes_feature)
     adrp_flag = False
 
     for index in range(len(asm_json)):
@@ -146,39 +148,53 @@ def find_bytes_feature(bytes_file, address, wing_length):
                 print("0x%x:\t%s\t%s\t%s" %(i.address, i.mnemonic, i.op_str, i.bytes))
                 json_bytes_feature["original_codes"].update({f"{hex(i.address)}": [f"{i.mnemonic}  {i.op_str}", ''.join('{:02x}'.format(x) for x in i.bytes)]})
                 byte_cache = bytearray(0)
-                if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
-                    byte_cache = bytearray(b'(.{3})')
-                    try:
-                        byte_cache += bytesarray_escape(i.bytes[3])
-                    except:
-                        byte_cache.append(bytesarray_escape(i.bytes[3]))
-                elif i.mnemonic == 'blr' or i.mnemonic == 'br':
-                    byte_cache = bytearray(b'(.{2})')
-                    byte_cache += bytesarray_escape(i.bytes[2:4])
-                elif i.mnemonic == 'adrp':
-                    byte_cache = bytearray(b'(.{4})')
-                    adrp_flag = True
-                elif (i.mnemonic == 'ldr' or i.mnemonic == 'ldrb' or i.mnemonic == 'add') and adrp_flag:
-                    try:
-                        byte_cache += bytesarray_escape(i.bytes[0])
-                    except:
-                        byte_cache.append(bytesarray_escape(i.bytes[0]))
-                    byte_cache += bytearray(b'(.{2})')
-                    try:
-                        byte_cache += bytesarray_escape(i.bytes[3])
-                    except:
-                        byte_cache.append(bytesarray_escape(i.bytes[3]))
-                    adrp_flag = False
-                else:
-                    byte_cache = re.escape(bytearray(i.bytes))
-                    adrp_flag = False
+                if asm_type == 'arm64':
+                    if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
+                        byte_cache = bytearray(b'(.{3})')
+                        try:
+                            byte_cache += bytesarray_escape(i.bytes[3])
+                        except:
+                            byte_cache.append(bytesarray_escape(i.bytes[3]))
+                    elif i.mnemonic == 'blr' or i.mnemonic == 'br':
+                        byte_cache = bytearray(b'(.{2})')
+                        byte_cache += bytesarray_escape(i.bytes[2:4])
+                    elif i.mnemonic == 'adrp':
+                        byte_cache = bytearray(b'(.{4})')
+                        adrp_flag = True
+                    elif (i.mnemonic == 'ldr' or i.mnemonic == 'ldrb' or i.mnemonic == 'add') and adrp_flag:
+                        try:
+                            byte_cache += bytesarray_escape(i.bytes[0])
+                        except:
+                            byte_cache.append(bytesarray_escape(i.bytes[0]))
+                        byte_cache += bytearray(b'(.{2})')
+                        try:
+                            byte_cache += bytesarray_escape(i.bytes[3])
+                        except:
+                            byte_cache.append(bytesarray_escape(i.bytes[3]))
+                        adrp_flag = False
+                    else:
+                        byte_cache = re.escape(bytearray(i.bytes))
+                        adrp_flag = False
+                elif asm_type == 'arm32':
+                    if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
+                        byte_cache = bytearray(b'(.{3})')
+                        try:
+                            byte_cache += bytesarray_escape(i.bytes[3])
+                        except:
+                            byte_cache.append(bytesarray_escape(i.bytes[3]))
+                    elif i.mnemonic == 'blx' or i.mnemonic == 'bx':
+                        byte_cache = bytearray(b'(.{1})')
+                        byte_cache += bytesarray_escape(i.bytes[1:4])
+                    else:
+                        byte_cache = re.escape(bytearray(i.bytes))
+
                 bytes_feature += byte_cache
 
     json_bytes_feature["bytes_feature"] = ''.join('{:02x}'.format(x) for x in bytes_feature)
 
     return json_bytes_feature
 
-def get_ASM_code(bytes_file, addr_range):  # remove wing length for address overflow check
+def get_ASM_code(bytes_file, addr_range, asm_type = 'arm64'):  # remove wing length for address overflow check
     start_address = addr_range[0]
     end_address = addr_range[1]
     asm_binarray = bytes_file[start_address : end_address]
@@ -243,7 +259,10 @@ def get_ASM_code(bytes_file, addr_range):  # remove wing length for address over
                 count += 1
                 break
 
-    Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    if asm_type == 'arm64':
+        Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    elif asm_type == 'arm32':
+        Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
     msg = []
     gap_length = 0
 
@@ -268,7 +287,6 @@ def get_ASM_code(bytes_file, addr_range):  # remove wing length for address over
 
 def create_links(code_with_bl: dict) -> str:
     new_code_line = ''
-    Assembler = Ks(KS_ARCH_ARM64, KS_MODE_LITTLE_ENDIAN)
     print(code_with_bl)
     for key in code_with_bl:
         if code_with_bl[key]['code_type'] == 'ASM':
@@ -284,7 +302,12 @@ def create_links(code_with_bl: dict) -> str:
                     code_address = code_with_bl[key]['contents']['base_addr']
                     b_op = code_with_bl[key]['contents']['bl_type']
                     code_str = b_op + ' #' + hex(bl_address)
-                    encoding_dock, _ = Assembler.asm(code_str, code_address)
+                    if code_with_bl[key]['asm_type'] == 'arm64':
+                        Assembler = Ks(KS_ARCH_ARM64, KS_MODE_LITTLE_ENDIAN)
+                        encoding_dock, _ = Assembler.asm(code_str, code_address)
+                    elif code_with_bl[key]['asm_type'] == 'arm32':
+                        Assembler = Ks(KS_ARCH_ARM, KS_MODE_ARM | KS_MODE_LITTLE_ENDIAN)
+                        encoding_dock, _ = Assembler.asm(code_str, code_address)
                     code_3rd = []
                     _code_3rd = ''.join('{:02x}'.format(x) for x in reversed(encoding_dock))
                     _code_3rd = _code_3rd.upper()

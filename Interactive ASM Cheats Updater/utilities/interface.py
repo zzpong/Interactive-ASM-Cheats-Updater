@@ -1,5 +1,5 @@
 from asyncio.subprocess import PIPE, STDOUT
-import tkinter, os, base64, webbrowser, shutil, re, time, json, subprocess
+import tkinter, os, base64, webbrowser, shutil, re, time, json, subprocess, sys
 from copy import deepcopy
 from capstone import *
 from keystone import *
@@ -11,7 +11,52 @@ from tkinter import dialog, filedialog
 from sources.memory_pic import *
 from utilities.code_process import *
 from utilities.main_file import *
+from utilities.game_package import Game_Package
 from config.config import extra_code_pattern
+
+from pathlib import Path
+
+special_package_suffix = ['.XCI', '.xci', '.NSP', '.nsp', '.XCZ', '.xcz', '.NSZ', '.nsz']
+
+def get_keys(key_path) -> None:
+    keys = {}
+    keyFile = Path(os.path.join(key_path, 'keys.txt'))
+    if not keyFile.is_file():
+        keyFile = Path.home().joinpath('.switch', 'prod.keys')
+    if not keyFile.is_file():
+        raise IOError('Keys File not found!')
+    with open(keyFile, encoding="utf8") as f:
+        for line in f.readlines():
+            pattern = re.match('\s*([a-z0-9_]+)\s*=\s*([A-F0-9]+)\s*', line, re.I)
+            if pattern:
+                keys[pattern.group(1)] = bytes.fromhex(pattern.group(2))
+    return keys if keys else None
+
+class Stdout_Redirect:
+    def __init__(self, text_widget):
+        self.output = text_widget
+        self.stdout_bak = sys.stdout
+        self.stderr_bak = sys.stderr
+        sys.stdout = self
+        sys.stderr = self
+        
+    def write(self, message):
+        if message != ' ' and message != '\n':
+            self.output.config(state=NORMAL)
+            if len(message) >= 1 and message[-1] == '\n':
+                self.output.insert('insert', f'[{time.asctime(time.localtime(time.time()))}] {message}\n')
+            else:
+                self.output.insert('insert', f'[{time.asctime(time.localtime(time.time()))}] {message}\n\n')
+            self.output.config(state=DISABLED)
+            self.output.see(END)
+            self.output.update()
+
+    def restore_std(self):
+        sys.stdout = self.stdout_bak
+        sys.stderr = self.stderr_bak
+    
+    def flush(self):
+        pass
 
 def get_pic(pic_code, pic_name):
     image = open(pic_name, 'wb')
@@ -72,6 +117,7 @@ class LinkLabel(Label):
         self.isclick=True
         webbrowser.open(self.link)
 
+
 class ASM_updater_UI:
     def __init__(self, loc: dict, root_path: str):
         self.mainWin = tkinter.Tk()
@@ -80,6 +126,11 @@ class ASM_updater_UI:
         self.loc_msg_map = loc['msg_map']
         self.loc_wing_length_default = loc['wing_length_default']
         self.loc_extra_wing_length_default = loc['loc_extra_wing_length_default']
+
+        keys = get_keys(Path(root_path))
+        if keys is None:
+            messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['request keys'])))
+        self.game_package = Game_Package(keys, loc['msg_map'])
 
         self.mainWin.title(loc['title'])
         get_pic(xcw_ico, 'xcw.ico')
@@ -353,6 +404,21 @@ class ASM_updater_UI:
         self.old_file_entry.config(state=DISABLED)
         
         if file_path != '':
+            if Path(file_path).suffix in special_package_suffix:
+                messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['Unpack Warning'])))
+
+                # NSP/NSZ/XCI/XCZ pre-processing
+                out_redir = Stdout_Redirect(self.log_text)
+                updated_file_path = self.game_package.get_main_file(file_path)
+                if updated_file_path is not None:
+                    file_path = updated_file_path
+                    self.old_file_entry.config(state=NORMAL)
+                    self.old_file_entry.delete(0, END)
+                    self.old_file_entry.insert('insert', file_path)
+                    self.old_file_entry.config(state=DISABLED)
+                out_redir.restore_std()
+
+            # NSO processing
             self.main_old_file = Main_File(file_path)
             if not self.main_old_file.is_NSO_file():
                 self.log_out('\n'.join(eval(self.loc_msg_map['NOT NSO File'])), False)
@@ -407,8 +473,23 @@ class ASM_updater_UI:
         self.new_file_entry.delete(0, END)
         self.new_file_entry.insert('insert', file_path)
         self.new_file_entry.config(state=DISABLED)
-        
+
         if file_path != '':
+            if Path(file_path).suffix in special_package_suffix:
+                messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['Unpack Warning'])))
+
+                # NSP/NSZ/XCI/XCZ pre-processing
+                out_redir = Stdout_Redirect(self.log_text)
+                updated_file_path = self.game_package.get_main_file(file_path)
+                if updated_file_path is not None:
+                    file_path = updated_file_path
+                    self.new_file_entry.config(state=NORMAL)
+                    self.new_file_entry.delete(0, END)
+                    self.new_file_entry.insert('insert', file_path)
+                    self.new_file_entry.config(state=DISABLED)
+                out_redir.restore_std()
+
+            # NSO processing
             self.main_new_file = Main_File(file_path)
             if not self.main_new_file.is_NSO_file():
                 self.log_out('\n'.join(eval(self.loc_msg_map['NOT NSO File'])), False)
@@ -468,7 +549,10 @@ class ASM_updater_UI:
         self.log_text.config(state=NORMAL)
         if need_clear:
             self.log_text.delete(0.1, END)
-        self.log_text.insert('insert', f'[{time.asctime(time.localtime(time.time()))}] {message}\n')
+        if len(message) >= 1 and message[-1] == '\n':
+            self.log_text.insert('insert', f'[{time.asctime(time.localtime(time.time()))}] {message}\n')
+        else:
+            self.log_text.insert('insert', f'[{time.asctime(time.localtime(time.time()))}] {message}\n\n')
         self.log_text.config(state=DISABLED)
         self.log_text.see(END)
 
@@ -631,7 +715,33 @@ class ASM_updater_UI:
             self.ASM_wings_text.insert(0, self.loc_extra_wing_length_default)
         return extra_wing_length
 
-    def check_line(self, cheat_line: str):
+    def check_asm_type(self, cheat_bundle):  # Warning: assuming asm type keeps the same in one cheat function bundle
+        asm64_count = 0
+        asm32_count = 0
+        pattern_code = re.compile(r'([abcdef\d]{8})', re.I)
+        pattern_asm_code = re.compile(r'^0([48])0[abcdef\d]0000$', re.I)
+        Disassembler_64 = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+        Disassembler_32 = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
+        for cheat_line in cheat_bundle:
+            is_code = pattern_code.findall(cheat_line)
+            if len(is_code) != 0 and len(is_code) <= 3:
+                if pattern_asm_code.match(is_code[0]) is not None:
+                    asm_code_addr = int(is_code[1], 16)
+                    asm_code_main = is_code[2]
+                    code_bytes = bytearray.fromhex(asm_code_main)
+                    code_bytes.reverse()
+                    for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
+                        asm64_count += 1
+                    for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
+                        asm32_count += 1
+        if asm64_count + asm32_count == 0:
+            return None
+        elif asm64_count >= asm32_count:  # Hints: high arm64 weight
+            return 'arm64'
+        else:
+            return 'arm32'
+
+    def check_line(self, cheat_line: str, asm_type = 'arm64'):
     # check one single line from cheat codes, filter format and return info
         pattern_code_title = re.compile(r'^ *(\[.*\]) *$')
         pattern_master_code_title = re.compile(r'^ *(\{.*\}) *$')
@@ -665,7 +775,10 @@ class ASM_updater_UI:
                 bl_offset_to_main = 0
                 bl_type = None
                 border_dist = None
-                Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+                if asm_type == 'arm64':
+                    Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+                elif asm_type == 'arm32':
+                    Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
                 code_bytes = bytearray.fromhex(asm_code_main)
                 code_bytes.reverse()
                 for i in Disassembler.disasm(code_bytes, asm_code_addr):
@@ -691,6 +804,7 @@ class ASM_updater_UI:
                             'contents':
                             {
                                 'code_type': 'ASM',
+                                'asm_type': asm_type,
                                 'memory_width': 4,
                                 'is_code_cave': is_code_cave,
                                 'border_dist': border_dist,
@@ -834,8 +948,9 @@ class ASM_updater_UI:
                 json_comb_code_cache = {}
                 slice_code = False
                 current_index = 0
+                asm_type = self.check_asm_type(code_cache)
                 for index in range(len(code_cache)):
-                    code_json = self.check_line(code_cache[index])
+                    code_json = self.check_line(code_cache[index], asm_type)
 
                     if bool(json_comb_code_cache):
                         if json_comb_code_cache[f'{current_index}']['code_type'] != code_json['contents']['code_type']:
@@ -895,6 +1010,7 @@ class ASM_updater_UI:
                             json_comb_code_cache.update(
                                 {f'{index}': {
                                     'code_type': 'ASM',
+                                    'asm_type': code_json['contents']['asm_type'],  # Warning: assuming asm type keeps the same in one cheat function bundle
                                     'contents':
                                         {
                                             'is_code_cave': code_json['contents']['is_code_cave'],
@@ -1034,8 +1150,8 @@ class ASM_updater_UI:
         hit_start_addr = list(map(lambda x:hex(x+int(json_bytes_feature["taget_start_offset"],16)), hit_start_addr))
         return hit_start_addr
 
-    def find_addr_re(self, addr_range, wing_length, wing_type):  # massive decrease search when no addr find is meaningless
-        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+    def find_addr_re(self, addr_range, wing_length, wing_type, asm_type = 'arm64'):  # massive decrease search when no addr find is meaningless
+        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length, asm_type)
         if json_bytes_feature == 'NotMain':
             messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['Not Main Code'])))
             return
@@ -1059,7 +1175,7 @@ class ASM_updater_UI:
                     wing_length_next += wing_step  # check both
                     for index in range(len(hit_start_addr)):
                         bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-wing_step*4 : hit_end_addr[index]+wing_step*4]
-                        if self.check_addr(addr_range, wing_length_next, bytes_file):
+                        if self.check_addr(addr_range, wing_length_next, bytes_file, asm_type):
                             hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
                             hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
                         else:
@@ -1082,7 +1198,7 @@ class ASM_updater_UI:
                         wing_length_next[0] += wing_step  # check left
                         for index in range(len(hit_start_addr)):
                             bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index]-wing_step*4 : hit_end_addr[index]]
-                            if self.check_addr(addr_range, wing_length_next, bytes_file):
+                            if self.check_addr(addr_range, wing_length_next, bytes_file, asm_type):
                                 hit_start_addr_next.append(hit_start_addr[index]-wing_step*4)
                                 hit_end_addr_next.append(hit_end_addr[index])
                             else:
@@ -1105,7 +1221,7 @@ class ASM_updater_UI:
                         wing_length_next[1] += wing_step  # check right
                         for index in range(len(hit_start_addr)):
                             bytes_file = self.main_new_file.mainFuncFile[hit_start_addr[index] : hit_end_addr[index]+wing_step*4]
-                            if self.check_addr(addr_range, wing_length_next, bytes_file):
+                            if self.check_addr(addr_range, wing_length_next, bytes_file, asm_type):
                                 hit_start_addr_next.append(hit_start_addr[index])
                                 hit_end_addr_next.append(hit_end_addr[index]+wing_step*4)
                             else:
@@ -1122,7 +1238,99 @@ class ASM_updater_UI:
                             right_side_available = False
                     
                     if not left_side_available and not right_side_available:
+                            break
+        else:
+            single_left_side_available = True
+            single_right_side_available = True
+
+            wing_length_l = [1, 0]  # check single left side wing length
+            json_bytes_feature_l = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length_l, asm_type)
+            if json_bytes_feature_l == 'NotMain':
+                messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['Not Main Code'])))
+                return
+            bytes_feature_l = bytes(bytearray.fromhex(json_bytes_feature_l["bytes_feature"]))
+            hit_start_addr_l = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature_l)
+            hit_end_addr_l = list(map(lambda x:x+int(json_bytes_feature_l["taget_end_offset"],16)+wing_length_l[1]*4, hit_start_addr_l))
+            if len(hit_start_addr_l) != 0:
+                while len(hit_start_addr_l) != 1: 
+                    hit_start_addr_next_l = []
+                    hit_end_addr_next_l = []
+                    wing_length_next_l = deepcopy(wing_length_l)
+                    wing_length_next_l[0] += wing_step
+                    for index in range(len(hit_start_addr_l)):
+                        bytes_file_l = self.main_new_file.mainFuncFile[hit_start_addr_l[index]-wing_step*4 : hit_end_addr_l[index]]
+                        if self.check_addr(addr_range, wing_length_next_l, bytes_file_l, asm_type):
+                            hit_start_addr_next_l.append(hit_start_addr_l[index]-wing_step*4)
+                            hit_end_addr_next_l.append(hit_end_addr_l[index])
+                        else:
+                            pass
+                    if len(hit_start_addr_next_l) != 0:
+                        hit_start_addr_l = deepcopy(hit_start_addr_next_l)
+                        hit_end_addr_l = deepcopy(hit_end_addr_next_l)
+                        wing_length_l = deepcopy(wing_length_next_l)
+                        if len(hit_start_addr_next_l) == 1:
+                            # log_out('Single address found.')
+                            break
+                    else:
                         break
+            else:
+                single_left_side_available = False
+
+            wing_length_r = [0, 1]  # check single left side wing length
+            json_bytes_feature_r = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length_r, asm_type)
+            if json_bytes_feature_r == 'NotMain':
+                messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['Not Main Code'])))
+                return
+            bytes_feature_r = bytes(bytearray.fromhex(json_bytes_feature_r["bytes_feature"]))
+            hit_start_addr_r = bytesarray_refindall(self.main_new_file.mainFuncFile, bytes_feature_r)
+            hit_end_addr_r = list(map(lambda x:x+int(json_bytes_feature_r["taget_end_offset"],16)+wing_length_r[1]*4, hit_start_addr_r))
+            if len(hit_start_addr_r) != 0:
+                while len(hit_start_addr_r) != 1: 
+                    hit_start_addr_next_r = []
+                    hit_end_addr_next_r = []
+                    wing_length_next_r = deepcopy(wing_length_r)
+                    wing_length_next_r[1] += wing_step
+                    for index in range(len(hit_start_addr_r)):
+                        bytes_file_r = self.main_new_file.mainFuncFile[hit_start_addr_r[index] : hit_end_addr_r[index]+wing_step*4]
+                        if self.check_addr(addr_range, wing_length_next_r, bytes_file_r, asm_type):
+                            hit_start_addr_next_r.append(hit_start_addr_r[index])
+                            hit_end_addr_next_r.append(hit_end_addr_r[index]+wing_step*4)
+                        else:
+                            pass
+                    if len(hit_start_addr_next_r) != 0:
+                        hit_start_addr_r = deepcopy(hit_start_addr_next_r)
+                        hit_end_addr_r = deepcopy(hit_end_addr_next_r)
+                        wing_length_r = deepcopy(wing_length_next_r)
+                        if len(hit_start_addr_next_r) == 1:
+                            # log_out('Single address found.')
+                            break
+                    else:
+                        break
+            else:
+                single_right_side_available = False
+            
+            if not single_left_side_available and not single_right_side_available:
+                # log_out('No address available.')
+                pass
+            else:
+                if len(hit_start_addr_l) == 1:
+                    wing_length = deepcopy(wing_length_l)
+                    hit_start_addr = deepcopy(hit_start_addr_l)
+                    hit_end_addr = deepcopy(hit_end_addr_l)
+                elif len(hit_start_addr_r) == 1:
+                    wing_length = deepcopy(wing_length_r)
+                    hit_start_addr = deepcopy(hit_start_addr_r)
+                    hit_end_addr = deepcopy(hit_end_addr_r)
+                elif len(hit_start_addr_l) <= len(hit_start_addr_r):
+                    wing_length = deepcopy(wing_length_l)
+                    hit_start_addr = deepcopy(hit_start_addr_l)
+                    hit_end_addr = deepcopy(hit_end_addr_l)
+                else:
+                    wing_length = deepcopy(wing_length_r)
+                    hit_start_addr = deepcopy(hit_start_addr_r)
+                    hit_end_addr = deepcopy(hit_end_addr_r)
+                
+                self.wing_length_out_re(f'[{wing_length[0]}, {wing_length[1]}]', wing_type)
               
         if isinstance(wing_length, int):
             hit_code_start_addr = list(map(lambda x:hex(x+wing_length*4), hit_start_addr))
@@ -1131,8 +1339,8 @@ class ASM_updater_UI:
        
         return hit_code_start_addr
     
-    def check_addr(self, addr_range, wing_length, bytes_file):
-        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length)
+    def check_addr(self, addr_range, wing_length, bytes_file, asm_type = 'arm64'):
+        json_bytes_feature = find_bytes_feature(self.main_old_file.mainFuncFile, addr_range, wing_length, asm_type)
         bytes_feature = bytes(bytearray.fromhex(json_bytes_feature["bytes_feature"]))
         hit_start_addr = bytesarray_refindall(bytes_file, bytes_feature)
         if len(hit_start_addr) == 0:
@@ -1172,6 +1380,7 @@ class ASM_updater_UI:
         if update_type == 0:
             self.reset_middle_ASM_state()  # refresh undo state
 
+        asm_type = _asm_cache_json['asm_type']
         org_addr = _asm_cache_json['contents']['org_addr']
         bl_org_addr = _asm_cache_json['contents']['bl_org_addr']
         hit_addr = _asm_cache_json['contents']['hit_addr']
@@ -1276,8 +1485,8 @@ class ASM_updater_UI:
             high_light_line = [float(wing_length[0] + extra_wing_length[0]),
                                 float(wing_length[0] + extra_wing_length[0] + _high_light_count - 1)]
 
-        self.old_ASM_text_out(get_ASM_code(self.main_old_file.mainFuncFile, org_wing_range), high_light_line)
-        self.new_ASM_text_out(get_ASM_code(self.main_new_file.mainFuncFile, tag_wing_range), high_light_line)
+        self.old_ASM_text_out(get_ASM_code(self.main_old_file.mainFuncFile, org_wing_range, asm_type), high_light_line)
+        self.new_ASM_text_out(get_ASM_code(self.main_new_file.mainFuncFile, tag_wing_range, asm_type), high_light_line)
 
         return _asm_cache_json
 
@@ -1614,7 +1823,7 @@ class ASM_updater_UI:
                                 self.current_out(current_out_text, True)
                                 
                                 _asm_cache_json = deepcopy(self.asm_cache_json[next(iter(self.asm_cache_json.keys()))])
-                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0)
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0, _asm_cache_json['asm_type'])
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 print(hit_start_addr_str)
 
@@ -1703,7 +1912,7 @@ class ASM_updater_UI:
                                             elif self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_line'] is None:
                                                 bl_target_hit_start_addr = []
                                                 bl_target_wing_length = self.check_wings()
-                                                bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
+                                                bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0, self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['asm_type'])
                                                 bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                                 if len(bl_target_hit_start_addr_str) == 0:
                                                     log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
@@ -1744,10 +1953,10 @@ class ASM_updater_UI:
                                         bl_target_wing_length[0] = bl_target_wing_length[1]
                                         wing_length[1] = wing_length[0] 
                                 
-                                    bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2)
+                                    bl_target_hit_start_addr = self.find_addr_re([self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr'], self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2, self.asm_cache_json[next(iter(self.asm_cache_json.keys()))]['asm_type'])
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1)
+                                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1, _asm_cache_json['asm_type'])
                                 hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                                 if len(hit_start_addr) == 0:
@@ -1909,7 +2118,7 @@ class ASM_updater_UI:
 
                 cache_regenerate = deepcopy(self.stage_detail_json['step'][str(self.step-2)]['current_out_text']['contents']['asm_cache_json'])
                 _asm_cache_json = deepcopy(cache_regenerate[next(iter(cache_regenerate.keys()))])
-                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0)
+                hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 0, _asm_cache_json['asm_type'])
                 hit_start_addr_str = ', '.join(hit_start_addr)
                 print(hit_start_addr_str)
                 is_generate_button_discard = False
@@ -1978,7 +2187,7 @@ class ASM_updater_UI:
                                 elif cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_line'] is None:  # to main addr that not in cheat codes
                                     bl_target_hit_start_addr = []
                                     bl_target_wing_length = self.check_wings()
-                                    bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0)
+                                    bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 0, cache_regenerate[next(iter(cache_regenerate.keys()))]['asm_type'])
                                     bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
                                     if len(bl_target_hit_start_addr_str) == 0:
                                         log_out_text = '\n'.join(eval(self.loc_msg_map['asm_bl_cave_no_addr']))
@@ -2015,10 +2224,10 @@ class ASM_updater_UI:
                             bl_target_wing_length[0] = bl_target_wing_length[1]
                             wing_length[1] = wing_length[0]
                                     
-                        bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2)
+                        bl_target_hit_start_addr = self.find_addr_re([cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr'], cache_regenerate[next(iter(cache_regenerate.keys()))]['contents']['bl_addr']+4], bl_target_wing_length, 2, cache_regenerate[next(iter(cache_regenerate.keys()))]['asm_type'])
                         bl_target_hit_start_addr_str = ', '.join(bl_target_hit_start_addr)
 
-                    hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1)
+                    hit_start_addr = self.find_addr_re([_asm_cache_json['contents']['base_addr'], _asm_cache_json['contents']['next_addr']], wing_length, 1, _asm_cache_json['asm_type'])
                     hit_start_addr_str = ', '.join(hit_start_addr)
                                 
                     if len(hit_start_addr) == 0:
