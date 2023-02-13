@@ -59,7 +59,7 @@ Visit out [releases](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/re
 ### Usage
 
 #### Dump main file from xci/nsp/nsz game/updates (required only if version < 0.5.0)
-There are lots of excellent works for you to dump the main file, like [hactool](https://github.com/SciresM/hactool) and [NSC_Builder](https://github.com/julesontheroad/NSC_BUILDER). Please choose anyone you familiar with to dump two main files:
+There are lots of excellent works for you to dump the main file, like [hactool](https://github.com/SciresM/hactool), [NSC_Builder](https://github.com/julesontheroad/NSC_BUILDER) and [DBI](https://github.com/rashevskyv/dbi). Please choose anyone you familiar with to dump two main files:
 * **Old Main File**: dump from the game which old cheat runs on
 * **New main File**: dump from the game which you want to update the old cheat to
 
