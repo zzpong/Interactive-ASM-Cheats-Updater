@@ -1,7 +1,44 @@
+extra_code_pattern = {
+    "code_0x2":
+    {
+        "pattern": "r'^20000000$'",
+        "pattern_match": "is_code[0]",
+        "code_length": 1,
+        "contents":
+                    {
+                            "code_type": "str('Extra')",
+                            "code_func": "str('End Condition Block')",
+                            "code_regen": "True",
+                            "memory_width": "0",
+                            "code_head": "is_code[0]",
+                            "code_addr": "None",
+                            "code_main": "None",
+                            "code_raw": "is_code"
+                    }
+    },
+    "code_0x8":
+    {
+        "pattern": "r'^(8)[abcdef\d]{7}$'",
+        "pattern_match": "is_code[0]",
+        "code_length": 1,
+        "contents":
+                    {
+                            "code_type": "str('Extra')",
+                            "code_func": "str('Keypress Block')",
+                            "code_regen": "True",
+                            "memory_width": "0",
+                            "code_head": "is_code[0]",
+                            "code_addr": "None",
+                            "code_main": "None",
+                            "code_raw": "is_code"
+                    }
+    }
+}
+
 localization = {
     "loc_EN":
         {
-            "title": "Interactive ASM Cheats Updater ver 0.3",
+            "title": "Interactive ASM Cheats Updater ver 0.5 beta",
             "wing_length_default": "[1, 1]",
             "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -29,7 +66,7 @@ localization = {
                 "Load New": "Load",
                 "Regenerate": "Regenerate",
                 "Generate": "Generate",
-                "Skip": "Skip",
+                "Skip": "Skip",  # "Discard" is better here
                 "Undo": "Undo",
                 "Restart": "Restart",
                 "SaveCHT": "SaveCHT",
@@ -44,6 +81,13 @@ localization = {
             },
             "msg_map":
             {
+                "request keys": """['No "keys.txt" file found in root of this app, cannot extract game packages.']""",
+                "required key version": """[f'Required "titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
+                ".nso extraction failed": """['Extracting "main" from game package failed']""",
+                "Unpack Warning": """[f'Unpack "{Path(file_path).suffix}" takes time, please be patient.']""",
+                "Extract NCA": """['Extracting NCA from game package ......']""",
+                "Extract ticket": """['Extracting ticket content from .tik ......']""",
+                "Extract main": """['Extracting main file from .nca ......']""",
                 "NOT NSO File": """['NOT NSO File.']""",
                 "DIR already exists": """['DIR already exists.']""",
                 "NSO file decompressed": """['NSO file decompressed.']""",
@@ -58,6 +102,7 @@ localization = {
                 "Cancel": """['Cancel']""",
                 "nsnsotool warning": """['nsnsotool failed working']""",
                 "nsnsotool missing": """['tools/nsnsotool.exe missing']""",
+                "Not Main Code":"""['Code address not in .text or code cave, need precisely manual revision. Please remove the line and restart or contact author.']""",
                 "asm_normal_asm_no_addr": 
                     """[f'This part is normal asm code. No address located, please change wing length and regenerate.',
                         '--- Both "generate" or "skip" will discard, "regenerate" to research ---']""",
@@ -82,10 +127,12 @@ localization = {
                         '--- Both "generate" or "skip" will discard ---']""",
                 "asm_bl_cave_to_cave":
                     """['This part is asm bl code in code cave, but it points to code cave address which is not an asm code.',
+                        'Please restart and copy master code to the current processing cheat code part if any.',
                         f'New code cave {code_cave_addr} find.',
-                        f'--- Both "generate" or "skip" will discard ---']""",
+                        f'---  Please copy anything which titled master code here and restart process, or both "generate" or "skip" will discard ---']""",
                 "asm_bl_cave_no_addr":
                     """['This part is asm bl code in code cave.',
+                        'Please restart and copy master code to the current processing cheat code part if any.',
                         f'New code cave {code_cave_addr} find.',
                         'Branch link search failed.',
                         '--- Press "generate" to export original branch link address, "skip" to discard or "regenerate" ---']""",
@@ -106,7 +153,8 @@ localization = {
                     """['This part is asm bl code which points to .datasegment, please check if any mistake happens.',
                         '--- Both "generate" or "skip" will discard ---']""",
                 "asm_bl_to_cave":
-                    """['This part is asm bl code, but it points to code cave address which is not an asm code.'
+                    """['This part is asm bl code, but it points to code cave address which is not an asm code.',
+                        'Please restart and copy master code to the current processing cheat code part if any.',
                         '--- Both "generate" or "skip" will discard ---']""",
                 "asm_bl_multi_to_none":
                     """['This part is asm bl code.',
@@ -160,8 +208,8 @@ localization = {
                     """['This part is title of asm code.',
                         '--- Both "generate" and "skip" will export the title ---']""",
                 "asm_normal_code":
-                    """['This part is normal code part of asm code, which always changes with updates.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
+                    """['This part is normal code part of asm code, which should be some static value for corresponding asm codes.',
+                        '--- Press "generate" to export updated addr or "skip" to export origin one ---']""",
                 "asm_cave_code_no_cave":
                     """['This part is code cave of asm code. However, there is NO SPACE in the new game version.',
                         '--- Both "generate" or "skip" will discard ---']""",
@@ -170,12 +218,23 @@ localization = {
                         '--- Both "generate" or "skip" will discard ---']""",
                 "asm_cave_code_has_space":
                     """[f'This part is code cave of asm bl code. New code cave {code_cave_addr} find.',
-                        '--- Press "generate" to export or "skip" to discard ---']"""
+                        '--- Press "generate" to export or "skip" to discard ---']""",
+                "End Condition Block":
+                    """[f'This part is loop break of cheat code format.',
+                        'Code format 0x2: All instructions after this end conditional block terminator will be skipped',
+                        '--- Press "generate" to export or "skip" to discard ---']""",
+                "Keypress Block":
+                    """[f'This part is keypress condition of cheat code format.',
+                        'Code format 0x8: Enters or skips a conditional block based on whether a key combination is pressed.',
+                        '--- Press "generate" to export or "skip" to discard ---']""",
+                "Code Unknown":
+                    """[f'This part is unknown or improper cheat code format. Function under construction.',
+                        '--- Press "generate" to export or "skip" to discard ---']""",
             }
         },
  "loc_CN":
         {
-            "title": "金手指自动更新器 ver 0.3c",
+            "title": "金手指自动更新器 ver 0.5c beta",
             "wing_length_default": "[1, 1]",
             "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -218,6 +277,13 @@ localization = {
             },
             "msg_map":
             {
+                "request keys": """['本程序根目录下未找到 "keys.txt" 文件，将无法自动解包游戏']""",
+                "required key version": """[f'"keys.txt"中未找到"titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
+                ".nso extraction failed": """['从游戏中提取 "main" 文件失败']""",
+                "Unpack Warning": """[f'解包 "{Path(file_path).suffix}" 文件需要一段时间，还请耐心等待']""",
+                "Extract NCA": """['从游戏包提取NCA文件中......']""",
+                "Extract ticket": """['从.tik获取相关信息中......']""",
+                "Extract main": """['从.nca提取main文件中......']""",
                 "NOT NSO File": """['文件不合法']""",
                 "DIR already exists": """['路径已存在']""",
                 "NSO file decompressed": """['已自动解压Main文件']""",
@@ -232,6 +298,7 @@ localization = {
                 "Cancel": """['取消']""",
                 "nsnsotool warning": """['nsnsotool未正常工作']""",
                 "nsnsotool missing": """['tools/nsnsotool.exe文件丢失']""",
+                "Not Main Code":"""['这部分金手指地址不在.text及code cave区间，需手动精确修正。请移除该部分金手指后重新生成，或联系作者更新。']""",
                 "asm_normal_asm_no_addr": 
                     """[f'这是普通ASM金手指代码，未找到新地址，请修改翼展宽度并点击重新生成按钮。',
                         '--- “生成”与“跳过”按钮均会跳过生成，或使用“重新生成”按钮重新搜索 ---']""",
@@ -256,10 +323,12 @@ localization = {
                         '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
                 "asm_bl_cave_to_cave":
                     """['这是在code cave中的ASM跳转代码，但其指向非ASM代码。',
+                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
                         f'新code cave {code_cave_addr} 已定位。',
-                        f'--- “生成”与“跳过”按钮均会跳过生成 ---']""",
+                        f'--- 请将必须码复制到此项金手指中并“重置”进程，否则“生成”与“跳过”按钮均会跳过生成 ---']""",
                 "asm_bl_cave_no_addr":
                     """['这是在code cave中的ASM跳转代码。',
+                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
                         f'新code cave {code_cave_addr} 已定位。',
                         '跳转地址定位失败。',
                         '--- 使用“生成”按钮导出原始跳转地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
@@ -280,7 +349,8 @@ localization = {
                     """['这是ASM跳转代码，但指向.datasegment，请查看金手指代码是否有误。',
                         '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
                 "asm_bl_to_cave":
-                    """['这是ASM跳转代码，但其指向非ASM代码。'
+                    """['这是ASM跳转代码，但其指向非ASM代码。',
+                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
                         '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
                 "asm_bl_multi_to_none":
                     """['这是ASM跳转代码。',
@@ -334,8 +404,8 @@ localization = {
                     """['这是ASM代码的标题。',
                         '--- “生成”与“跳过”按钮均会仅导出标题 ---']""",
                 "asm_normal_code":
-                    """['这是ASM代码中的内存代码部分，它基本每次都随游戏版本变化，无法自动更新。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
+                    """['这是ASM代码中的内存代码部分，通常为附近ASM所需常量数据。',
+                        '--- 使用“生成”按钮生成并更新地址，或“跳过”按钮跳过地址更新 ---']""",
                 "asm_cave_code_no_cave":
                     """['这是在code cave中的ASM代码，但新版本游戏中不存在code cave。',
                         '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
@@ -344,6 +414,17 @@ localization = {
                         '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
                 "asm_cave_code_has_space":
                     """[f'这是在code cave中的ASM代码，新code cave {code_cave_addr} 已定位。',
+                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
+                "End Condition Block":
+                    """[f'这是退出循环的金手指指令代码。',
+                        '代码标志0x2：跳过其后所有循环过程。',
+                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
+                "Keypress Block":
+                    """[f'这是按键相关的金手指指令代码。',
+                        '代码标志0x8：通过特定按键执行特定功能。',
+                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
+                "Code Unknown":
+                    """[f'这是未识别或错误的金手指格式，更多功能将在新版本追加。',
                         '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']"""
             }
         }
