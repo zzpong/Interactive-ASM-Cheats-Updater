@@ -38,7 +38,7 @@ extra_code_pattern = {
 localization = {
     "loc_EN":
         {
-            "title": "Interactive ASM Cheats Updater ver 0.5 beta",
+            "title": "Interactive ASM Cheats Updater ver 0.5 gamma",
             "wing_length_default": "[1, 1]",
             "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -54,6 +54,7 @@ localization = {
                 "Load Old Main NSO File": "Load Old Main NSO File",
                 "Load New Main NSO File": "Load New Main NSO File",
                 "Save new cheats": "Save new cheats",
+                "Save new NSO": "Save new NSO",
                 "Old Main ASM:": "Old Main ASM:",
                 "New Main ASM:": "New Main ASM:",
                 "Extra Wing Length:": "Extra Length:",
@@ -82,7 +83,8 @@ localization = {
             "msg_map":
             {
                 "request keys": """['No "keys.txt" file found in root of this app, cannot extract game packages.']""",
-                "required key version": """[f'Required "titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
+                "required title key version": """[f'Required "titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
+                "required master key version": """[f'Required "master_key_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
                 ".nso extraction failed": """['Extracting "main" from game package failed']""",
                 "Unpack Warning": """[f'Unpack "{Path(file_path).suffix}" takes time, please be patient.']""",
                 "Extract NCA": """['Extracting NCA from game package ......']""",
@@ -97,6 +99,7 @@ localization = {
                 "Extra wing length check message": """['Extra wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
                 "Unknown cheat format": """[f'Unknown cheat format removed: {i}']""",
                 "Cheat Code": """['Cheat Code']""",
+                "NSO File": """['NSO File']""",
                 "Saved": """['Saved']""",
                 "OK": """['OK']""",
                 "Cancel": """['Cancel']""",
@@ -234,7 +237,7 @@ localization = {
         },
  "loc_CN":
         {
-            "title": "金手指自动更新器 ver 0.5c beta",
+            "title": "金手指自动更新器 ver 0.5c gamma",
             "wing_length_default": "[1, 1]",
             "loc_extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -250,6 +253,7 @@ localization = {
                 "Load Old Main NSO File": "载入旧版Main文件",
                 "Load New Main NSO File": "载入新版Main文件",
                 "Save new cheats": "保存新版金手指",
+                "Save new NSO": "保存新版NSO",
                 "Old Main ASM:": "旧版ASM源码:",
                 "New Main ASM:": "新版ASM源码:",
                 "Extra Wing Length:": "额外宽度:",
@@ -278,7 +282,8 @@ localization = {
             "msg_map":
             {
                 "request keys": """['本程序根目录下未找到 "keys.txt" 文件，将无法自动解包游戏']""",
-                "required key version": """[f'"keys.txt"中未找到"titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
+                "required title key version": """[f'"keys.txt"中未找到"titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
+                "required master key version": """[f'"keys.txt"中未找到"master_key_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
                 ".nso extraction failed": """['从游戏中提取 "main" 文件失败']""",
                 "Unpack Warning": """[f'解包 "{Path(file_path).suffix}" 文件需要一段时间，还请耐心等待']""",
                 "Extract NCA": """['从游戏包提取NCA文件中......']""",
@@ -293,6 +298,7 @@ localization = {
                 "Extra wing length check message": """['额外宽度必须为整数，如："20"，"[15,10]"']""",
                 "Unknown cheat format": """[f'未知金手指代码已移除：{i}']""",
                 "Cheat Code": """['金手指代码']""",
+                "NSO File": """['NSO文件']""",
                 "Saved": """['已保存']""",
                 "OK": """['确定']""",
                 "Cancel": """['取消']""",
