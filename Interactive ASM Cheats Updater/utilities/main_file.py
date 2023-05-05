@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os, json
 from typing import Optional
 
@@ -18,6 +19,7 @@ class Main_File:  # parse header
         self.codeCaveStart = bytearray(4)
         self.codeCaveEnd = bytearray(4)
         self.saveFile = bytearray()
+        self.NSORaw = bytearray()
         self.mainFuncFile = bytearray()
         self.fileName = file_name
 
@@ -26,6 +28,7 @@ class Main_File:  # parse header
         with open(self.fileName, 'rb') as fp:
             fp.readinto(buf)
         self.saveFile = buf
+        self.NSORaw = deepcopy(self.saveFile)
         offset = 0
         self.Magic = buf[4*offset : 4+4*offset].decode('unicode_escape')
         offset = 3
@@ -92,6 +95,9 @@ class Main_File:  # parse header
         else:
             return False
     
+    def is_main_addr(self, addr):
+        return addr in range(int.from_bytes(self.textFileOffset, byteorder='big', signed=False), int.from_bytes(self.textFileEnd, byteorder='big', signed=False))
+
     def has_code_cave(self):
         if (int.from_bytes(self.rodataMemoryOffset, byteorder='big', signed=False) -
             (int.from_bytes(self.textDecompSize, byteorder='big', signed=False) +
@@ -100,6 +106,16 @@ class Main_File:  # parse header
         else:
             return False
     
+    def modify(self, code_type, relative_addr, contents):
+        if code_type == 'asm_main':
+            self.NSORaw[int.from_bytes(self.textFileOffset, byteorder='big', signed=False)+relative_addr :
+                         int.from_bytes(self.textFileOffset, byteorder='big', signed=False)+relative_addr+len(contents)] = contents
+        elif code_type == 'asm_cave':
+            if self.has_code_cave():
+                self.NSORaw[int.from_bytes(self.codeCaveStart, byteorder='big', signed=False)+relative_addr :
+                            int.from_bytes(self.codeCaveStart, byteorder='big', signed=False)+relative_addr+len(contents)] = contents
+        return
+            
     def to_Json(self, file_name: Optional[str] = None):
         if self.has_code_cave():
             json_data = {

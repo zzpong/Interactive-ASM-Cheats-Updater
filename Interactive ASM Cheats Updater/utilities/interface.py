@@ -7,6 +7,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 from tkinter import dialog, filedialog
+import tkinter.font as tkFont
 
 from sources.memory_pic import *
 from utilities.code_process import *
@@ -139,6 +140,9 @@ class ASM_updater_UI:
         # self.mainWin.resizable(False, False)  # Debug: plugin will not shrink with window size
         os.remove("xcw.ico")
 
+        # Fonts
+        # font_setting = tkFont.Font(family="Arial", size=16, weight="bold", slant="italic")
+
         # Load file frame
         self.load_file_frame = tkinter.Frame(self.mainWin, width=1000, height=200, bg='LemonChiffon', relief=GROOVE)
         self.load_file_frame.pack(expand='yes', fill='both', anchor='n', side='top', padx=5, pady=5)
@@ -191,6 +195,7 @@ class ASM_updater_UI:
         # Input cheats text
         self.input_cheats_text = ScrolledText(self.input_cheats_frame, width=40, height=400, wrap=WORD)
         self.input_cheats_text.pack(expand='yes', fill='both', anchor='w', side='top', padx=5, pady=5)
+        # self.input_cheats_text.config(font=font_setting)
 
         # Middle cheats frame
         self.middle_cheats_frame = tkinter.Frame(self.main_cheats_frame, bd = 2, highlightthickness = 1, relief=RIDGE)
@@ -408,7 +413,7 @@ class ASM_updater_UI:
                 messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['Unpack Warning'])))
 
                 # NSP/NSZ/XCI/XCZ pre-processing
-                out_redir = Stdout_Redirect(self.log_text)
+                out_redir = Stdout_Redirect(self.log_text)  # pipeline
                 updated_file_path = self.game_package.get_main_file(file_path)
                 if updated_file_path is not None:
                     file_path = updated_file_path
@@ -715,7 +720,7 @@ class ASM_updater_UI:
             self.ASM_wings_text.insert(0, self.loc_extra_wing_length_default)
         return extra_wing_length
 
-    def check_asm_type(self, cheat_bundle):  # Warning: assuming asm type keeps the same in one cheat function bundle
+    def check_asm_type(self, cheat_bundle):  # Warning: assuming asm type keeps the same in one cheat function bundle, assuming no memory & asm hybrid code
         asm64_count = 0
         asm32_count = 0
         pattern_code = re.compile(r'([abcdef\d]{8})', re.I)
@@ -727,15 +732,16 @@ class ASM_updater_UI:
             if len(is_code) != 0 and len(is_code) <= 3:
                 if pattern_asm_code.match(is_code[0]) is not None:
                     asm_code_addr = int(is_code[1], 16)
-                    asm_code_main = is_code[2]
-                    code_bytes = bytearray.fromhex(asm_code_main)
-                    code_bytes.reverse()
-                    for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
-                        asm64_count += 1
-                    for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
-                        asm32_count += 1
-        if asm64_count + asm32_count == 0:
-            return None
+                    if self.main_old_file.is_main_addr(asm_code_addr):
+                        asm_code_main = is_code[2]
+                        code_bytes = bytearray.fromhex(asm_code_main)
+                        code_bytes.reverse()
+                        for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
+                            asm64_count += 1
+                        for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
+                            asm32_count += 1
+        if asm64_count + asm32_count == 0:  # Hints: not in main addr or not ASM will be normal
+            return 'normal'
         elif asm64_count >= asm32_count:  # Hints: high arm64 weight
             return 'arm64'
         else:
@@ -775,29 +781,32 @@ class ASM_updater_UI:
                 bl_offset_to_main = 0
                 bl_type = None
                 border_dist = None
-                if asm_type == 'arm64':
-                    Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
-                elif asm_type == 'arm32':
-                    Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
-                code_bytes = bytearray.fromhex(asm_code_main)
-                code_bytes.reverse()
-                for i in Disassembler.disasm(code_bytes, asm_code_addr):
-                    is_asm_code = True
-                    asm_code_disam = ("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
-                    if (asm_code_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
-                    and asm_code_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
-                        is_code_cave = True
-                        border_dist = asm_code_addr - int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
-                    if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
-                        is_bl = True
-                        bl_type = i.mnemonic
-                        jump_addr = int(i.op_str[1:], 16)
-                        if (jump_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
-                        and jump_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
-                            bl_to_cave = True
-                        if jump_addr >= int.from_bytes(self.main_old_file.rodataMemoryOffset, byteorder='big', signed=False):
-                            bl_to_outer = True
-                            bl_offset_to_main = jump_addr - int.from_bytes(self.main_old_file.textMemoryOffset, byteorder='big', signed=False)
+                if asm_type == 'normal':
+                    is_asm_code = False
+                else:
+                    if asm_type == 'arm64':
+                        Disassembler = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+                    elif asm_type == 'arm32':
+                        Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
+                    code_bytes = bytearray.fromhex(asm_code_main)
+                    code_bytes.reverse()
+                    for i in Disassembler.disasm(code_bytes, asm_code_addr):
+                        is_asm_code = True
+                        asm_code_disam = ("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
+                        if (asm_code_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
+                        and asm_code_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
+                            is_code_cave = True
+                            border_dist = asm_code_addr - int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
+                        if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
+                            is_bl = True
+                            bl_type = i.mnemonic
+                            jump_addr = int(i.op_str[1:], 16)
+                            if (jump_addr >= int.from_bytes(self.main_old_file.codeCaveStart, byteorder='big', signed=False)
+                            and jump_addr < int.from_bytes(self.main_old_file.codeCaveEnd, byteorder='big', signed=False)):
+                                bl_to_cave = True
+                            if jump_addr >= int.from_bytes(self.main_old_file.rodataMemoryOffset, byteorder='big', signed=False):
+                                bl_to_outer = True
+                                bl_offset_to_main = jump_addr - int.from_bytes(self.main_old_file.textMemoryOffset, byteorder='big', signed=False)
                 if is_asm_code:
                     return {
                             'type': 'code',
@@ -2473,4 +2482,58 @@ class ASM_updater_UI:
         return
 
     def sav_nso(self):
-        messagebox.showinfo(title='Sorry', message='Under Construction')
+        if self.is_debug_mode.get():
+            if not os.path.exists(self.log_path):
+                os.makedirs(self.log_path)
+            else:
+                print("DIR already exists.")
+            file_name = os.path.join(self.log_path, 'cheats_procedure_json')
+            with open(f'{file_name}.json', 'w') as result_file:
+                json.dump(self.stage_detail_json, result_file, cls=MyEncoder, indent=1)
+
+        file_path = filedialog.asksaveasfilename(title=self.loc_hints_map['Save new NSO'],
+                        initialfile=f'main',
+                        filetypes=[('All Files', '*')])
+
+        for key in self.stage_detail_json['step']:
+            if (self.stage_detail_json['step'][key]['current_out_text']['type'] == 'asm_normal_code' or
+                self.stage_detail_json['step'][key]['current_out_text']['type'] == 'asm_normal_asm_code' or
+                self.stage_detail_json['step'][key]['current_out_text']['type'] == 'asm_bl_code'):
+                if not self.stage_detail_json['step'][key]['current_out_text']['contents']['is_generate_button_discard']:
+                    inner_code = self.stage_detail_json['step'][key]['current_out_text']['contents']
+                    inner_code = inner_code['bl_addr_and_target_addr'][str(inner_code['bl_step']-1)]['contents']  # pick one single line each time
+                    self.main_new_file.modify('asm_main', inner_code['base_addr'], inner_code['code_bytes'])
+            elif (self.stage_detail_json['step'][key]['current_out_text']['type'] == 'asm_cave_code' or
+                self.stage_detail_json['step'][key]['current_out_text']['type'] == 'asm_bl_cave_code'):
+                if not self.stage_detail_json['step'][key]['current_out_text']['contents']['is_generate_button_discard']:
+                    inner_code = self.stage_detail_json['step'][key]['current_out_text']['contents']
+                    inner_code = inner_code['bl_addr_and_target_addr'][str(inner_code['bl_step']-1)]['contents']  # pick one single line each time
+                    self.main_new_file.modify('asm_cave', inner_code['border_dist'], inner_code['code_bytes'])
+
+        if file_path != '':
+            messagebox.showinfo(title='Warning', message='Better save after all codes updated')
+            with open(file=file_path, mode='wb') as file:
+                file.seek(0)
+                file.truncate()
+                file.write(self.main_new_file.NSORaw)
+                dialog.Dialog(None, {'title': '\n'.join(eval(self.loc_msg_map['NSO File'])), 'text': '\n'.join(eval(self.loc_msg_map['Saved'])), 'bitmap': 'warning', 'default': 0,
+                        'strings': ('\n'.join(eval(self.loc_msg_map['OK'])), '\n'.join(eval(self.loc_msg_map['Cancel'])))})
+            
+            try:
+                if os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
+                    # os.system(f'cd tools && nsnsotool "{file_path}"')  # Hints: Recognized as virus by Windows Defender, pyinstaller -w or --noconsole to remove it
+                    process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+                    commands = ('cd tools\n'
+                                f'nsnsotool "{file_path}"\n'
+                            )
+                    outs, errs = process.communicate(commands.encode('gbk'))
+                    content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
+                    print(*content, sep="\n")
+                    messagebox.showinfo(title='Warning', message='Compressing done')
+                else:
+                    messagebox.showerror(title='Error', message='\n'.join(eval(self.loc_msg_map['nsnsotool missing'])))
+                    return
+            except:
+                messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['nsnsotool warning'])))
+        
+        return
