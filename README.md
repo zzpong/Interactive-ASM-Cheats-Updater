@@ -37,9 +37,9 @@ Now supports (same logic with cheats makers updating their codes like AOB):
 - [x] Skip page/pageoff codes
 - [x] Recognize branch codes and modify their pointer
 - [x] Auto fill cheat bids when saving .txt file
+- [x] Save modified .NSO file base on cheats
 
 TODO:
-- [ ] Save modified .NSO file base on cheats
 - [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
 
 
