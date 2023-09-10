@@ -128,6 +128,8 @@ class ASM_updater_UI:
         self.loc_wing_length_default = loc['wing_length_default']
         self.loc_extra_wing_length_default = loc['loc_extra_wing_length_default']
 
+        self.global_asm_type = None
+
         keys = get_keys(Path(root_path))
         if keys is None:
             messagebox.showwarning(title='Warning', message='\n'.join(eval(self.loc_msg_map['request keys'])))
@@ -733,16 +735,47 @@ class ASM_updater_UI:
                 if pattern_asm_code.match(is_code[0]) is not None:
                     asm_code_addr = int(is_code[1], 16)
                     if self.main_old_file.is_main_addr(asm_code_addr):
-                        asm_code_main = is_code[2]
-                        code_bytes = bytearray.fromhex(asm_code_main)
-                        code_bytes.reverse()
-                        for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
-                            asm64_count += 1
-                        for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
-                            asm32_count += 1
+                        if is_code[2] != '00000000':
+                            asm_code_main = is_code[2]
+                            code_bytes = bytearray.fromhex(asm_code_main)
+                            code_bytes.reverse()
+                            for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
+                                asm64_count += 1
+                            for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
+                                asm32_count += 1
         if asm64_count + asm32_count == 0:  # Hints: not in main addr or not ASM will be normal
             return 'normal'
-        elif asm64_count >= asm32_count:  # Hints: high arm64 weight
+        elif asm64_count == asm32_count:
+            return self.global_asm_type if self.global_asm_type is not None else 'arm64'
+        elif asm64_count > asm32_count:  # Hints: high arm64 weight
+            return 'arm64'
+        else:
+            return 'arm32'
+        
+    def check_total_asm_type(self, cheat_bundle):
+        asm64_count = 0
+        asm32_count = 0
+        pattern_code = re.compile(r'([abcdef\d]{8})', re.I)
+        pattern_asm_code = re.compile(r'^0([48])0[abcdef\d]0000$', re.I)
+        Disassembler_64 = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+        Disassembler_32 = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
+        for cheat_line in cheat_bundle:
+            is_code = pattern_code.findall(cheat_line)
+            if len(is_code) != 0 and len(is_code) <= 3:
+                if pattern_asm_code.match(is_code[0]) is not None:
+                    asm_code_addr = int(is_code[1], 16)
+                    if self.main_old_file.is_main_addr(asm_code_addr):
+                        if is_code[2] != '00000000':
+                            asm_code_main = is_code[2]
+                            code_bytes = bytearray.fromhex(asm_code_main)
+                            code_bytes.reverse()
+                            for _ in Disassembler_64.disasm(code_bytes, asm_code_addr):
+                                asm64_count += 1
+                            for _ in Disassembler_32.disasm(code_bytes, asm_code_addr):
+                                asm32_count += 1
+        if asm64_count + asm32_count == 0:
+            return 'arm64'  # Hints: not 'normal'
+        elif asm64_count >= asm32_count:
             return 'arm64'
         else:
             return 'arm32'
@@ -907,6 +940,13 @@ class ASM_updater_UI:
                 break
         input_cheats_list = input_cheats_list_cache
         input_cheats_list_property = list(map(lambda x:0 if self.check_line(x)['type'] != 'code' else 1, input_cheats_list))
+
+        code_only_list = []
+        for i in range(len(input_cheats_list_property)):
+            if input_cheats_list_property[i] == 1:
+                code_only_list.append(input_cheats_list[i])
+        self.global_asm_type = self.check_total_asm_type(code_only_list)
+
         # find title
         try:
             index = input_cheats_list_property.index(1)
