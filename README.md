@@ -137,7 +137,7 @@ Logs window has everything you need when updating cheat codes.
 
     A: "wing length" represents the number of code lines before and after the target area. Here is the diagram for a better view:
     
-    ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/wing_length.png)
+    ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/wing_length.png)
 
 6. What code cave remake brings between version 0.3 and 0.4?
 
