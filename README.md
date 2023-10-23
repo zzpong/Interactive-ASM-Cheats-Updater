@@ -4,7 +4,7 @@
 
 This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_capture.png)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Archived-Branch/program_capture.png)
 
 ## Table of Contents
 - [Functions](#functions)
@@ -24,7 +24,7 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 ## Functions
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_icon.jpg)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Archived-Branch/program_icon.jpg)
 
 Now supports (same logic with code makers updating their codes like AOB from Cheat Engine):
 - [x] Upgrade or degrade cheat codes
