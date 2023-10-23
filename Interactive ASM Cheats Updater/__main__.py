@@ -1,16 +1,35 @@
 import os
 
-from utilities.interface import ASM_updater_UI
-from config.config import localization
+from utilities.interface import CodeUpdaterInterface
+from config.config import *
+from utilities.logger import Logger
 
-## TODO:
-# GRANDIA HD Collection: need ARM32 decoder, not ARM64, with double tid
-# Only save cht file after click "Ok"
-# Frames have no auto-scale function
 
-def main():
+def main(language: str):
     root_path = os.getcwd()
-    _ = ASM_updater_UI(localization['loc_EN'], root_path)
+    _ = CodeUpdaterInterface(GlobalInfo(root_path, language))
+
+
+class GlobalInfo:  # Read-ONLY Property
+    def __init__(self, root_path: str, language: str):
+        self.root_path = root_path
+        self.back_path = os.path.join(self.root_path, 'back_up')
+        self.tool_path = os.path.join(self.root_path, 'tools')
+        self.log_path = os.path.join(self.root_path, 'log')
+
+        self.logger = Logger(root_path)
+
+        self.title = localization[language]['title']
+        self.hints_map = localization[language]['hints_map']
+        self.btn_map = localization[language]['btn_map']
+        self.msg_map = localization[language]['msg_map']
+        self.wing_length_default = localization[language]['wing_length_default']
+        self.extra_wing_length_default = localization[language]['extra_wing_length_default']
+
+        self.code_pattern = code_pattern[language]
+
+        self.supported_package_type = ['.xci', '.nsp', '.xcz', '.nsz']
+
 
 if __name__ == '__main__':
-    main()
+    main('loc_EN')
