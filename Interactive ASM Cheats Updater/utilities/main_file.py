@@ -1,10 +1,32 @@
+import os, json, shutil, time, subprocess
 from copy import deepcopy
-import os, json
+from tkinter import messagebox
 from typing import Optional
+from asyncio.subprocess import PIPE, STDOUT
+
+from utilities.exception import MainNSOError
 
 
-class Main_File:  # parse header
-    def __init__(self, file_name) -> None:
+def bytearray_slice(bytearray, loc, byteorderbig = False):
+    byte_4 = bytearray[4*loc : 4+4*loc]
+    if byteorderbig:
+        byte_4.reverse()
+    return byte_4
+
+def bytes_to_int(bytearray):
+    return int.from_bytes(bytearray, byteorder='big', signed=False)
+
+generate_msg = lambda x:'\n'.join(eval(x))
+
+
+class MainNSOStruct:
+    def __init__(self, file_path: str, globalInfo) -> None:
+        self.file_path = file_path
+        self.logger = globalInfo.logger
+        self.msg_map = globalInfo.msg_map
+        self.back_path = globalInfo.back_path
+        self.tool_path = globalInfo.tool_path
+
         self.Magic = ''
         self.Flags = bytearray(4)
         self.textFileOffset = bytearray(4)  # text base address in main file
@@ -18,107 +40,115 @@ class Main_File:  # parse header
         self.textFileEnd = bytearray(4)
         self.codeCaveStart = bytearray(4)
         self.codeCaveEnd = bytearray(4)
-        self.saveFile = bytearray()
+
         self.NSORaw = bytearray()
+        self.NSORaw4Mod = bytearray()
         self.mainFuncFile = bytearray()
-        self.fileName = file_name
+
+    def process_file(self):
+        if not self.is_NSO_file():
+            raise MainNSOError(generate_msg(self.msg_map['NOT NSO File']))
+        else:
+            if self.is_Compressed():
+                self.decompress()
+            self.get_struct_from_file()
+            self.get_mainfunc_file()
+            return True
+
+    def decompress(self):
+        file_name = os.path.basename(self.file_path)
+        if not os.path.exists(self.back_path):
+            os.makedirs(self.back_path)
+       
+        back_file_path = os.path.join(self.back_path, f'{file_name}_❀{int(time.time())}.bak')
+        shutil.copyfile(self.file_path, back_file_path)
+        if not os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
+            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool missing']))
+            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool missing'])))
+
+        try:
+            process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+            commands = ('cd tools\n'
+                        f'nsnsotool "{self.file_path}"\n'
+                    )
+            outs, errs = process.communicate(commands.encode('gbk'))
+            content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
+            print(*content, sep="\n")
+        except Exception as e:
+            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool warning']))
+            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool warning'])))
+        
+        self.logger.info(generate_msg(self.msg_map['NSO file decompressed']))
 
     def get_struct_from_file(self):
-        buf = bytearray(os.path.getsize(self.fileName))
-        with open(self.fileName, 'rb') as fp:
+        buf = bytearray(os.path.getsize(self.file_path))
+        with open(self.file_path, 'rb') as fp:
             fp.readinto(buf)
-        self.saveFile = buf
-        self.NSORaw = deepcopy(self.saveFile)
-        offset = 0
-        self.Magic = buf[4*offset : 4+4*offset].decode('unicode_escape')
-        offset = 3
-        self.Flags = buf[4*offset : 4+4*offset]
-        offset = 4
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.textFileOffset = cache
-        offset = 5
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.textMemoryOffset = cache
-        offset = 6
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.textDecompSize = cache
-        offset = 7
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.ModuleNameOffset = cache
-        offset = 8
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.rodataFileOffset = cache
-        offset = 9
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.rodataMemoryOffset = cache
-        offset = 10
-        cache = buf[4*offset : 4+4*offset]
-        cache.reverse()
-        self.rodataDecompSize = cache
+        self.NSORaw = buf
+        self.NSORaw4Mod = deepcopy(self.NSORaw)
+
+        self.Magic = bytearray_slice(buf, 0, byteorderbig = False).decode('unicode_escape')
+        self.Flags = bytearray_slice(buf, 3, byteorderbig = False)
+        self.textFileOffset = bytearray_slice(buf, 4, byteorderbig = True)
+        self.textMemoryOffset = bytearray_slice(buf, 5, byteorderbig = True)
+        self.textDecompSize = bytearray_slice(buf, 6, byteorderbig = True)
+        self.ModuleNameOffset = bytearray_slice(buf, 7, byteorderbig = True)
+        self.rodataFileOffset = bytearray_slice(buf, 8, byteorderbig = True)
+        self.rodataMemoryOffset = bytearray_slice(buf, 9, byteorderbig = True)
+        self.rodataDecompSize = bytearray_slice(buf, 10, byteorderbig = True)
+
         offset = 16 
         self.ModuleId = ''.join('{:02x}'.format(x) for x in buf[4*offset : 8+4*offset])
-        self.textFileEnd = (int.from_bytes(self.textFileOffset, byteorder='big', signed=False) +
-                        int.from_bytes(self.textDecompSize, byteorder='big', signed=False)).to_bytes(4, byteorder='big', signed=False)
+        self.textFileEnd = (bytes_to_int(self.textFileOffset) +
+                        bytes_to_int(self.textDecompSize)).to_bytes(4, byteorder='big', signed=False)
+        
         if self.has_code_cave():
-            self.codeCaveStart = (int.from_bytes(self.textMemoryOffset, byteorder='big', signed=False) +
-                    int.from_bytes(self.textDecompSize, byteorder='big', signed=False)).to_bytes(4, byteorder='big', signed=False)
+            self.codeCaveStart = (bytes_to_int(self.textMemoryOffset) +
+                    bytes_to_int(self.textDecompSize)).to_bytes(4, byteorder='big', signed=False)
             self.codeCaveEnd = self.rodataMemoryOffset
         else:
             self.codeCaveStart = bytearray.fromhex('00000000')
             self.codeCaveEnd = bytearray.fromhex('00000000')
+    
+    def get_mainfunc_file(self):
+        if self.is_NSO_file():
+            self.mainFuncFile = self.NSORaw[bytes_to_int(self.textFileOffset) : bytes_to_int(self.textFileEnd)]
 
     def is_NSO_file(self):
-        buf = bytearray(os.path.getsize(self.fileName))
-        with open(self.fileName, 'rb') as fp:
+        buf = bytearray(os.path.getsize(self.file_path))
+        with open(self.file_path, 'rb') as fp:
             fp.readinto(buf)
-        offset = 0
-        self.Magic = buf[4*offset : 4+4*offset].decode('unicode_escape')
-        if self.Magic == 'NSO0':
-            return True
-        else:
-            return False
+        self.Magic = bytearray_slice(buf, 0, byteorderbig = False).decode('unicode_escape')
+        return self.Magic == 'NSO0'
 
     def is_Compressed(self):
-        buf = bytearray(os.path.getsize(self.fileName))
-        with open(self.fileName, 'rb') as fp:
+        buf = bytearray(os.path.getsize(self.file_path))
+        with open(self.file_path, 'rb') as fp:
             fp.readinto(buf)
-        offset = 3
-        self.Flags = buf[4*offset : 4+4*offset]
-        if sum(self.Flags) != 0:
-            return True
-        else:
-            return False
+        self.Flags = bytearray_slice(buf, 3, byteorderbig = False)
+        return sum(self.Flags) != 0
     
     def is_main_addr(self, addr):
-        return addr in range(int.from_bytes(self.textFileOffset, byteorder='big', signed=False), int.from_bytes(self.textFileEnd, byteorder='big', signed=False))
+        return addr in range(bytes_to_int(self.textFileOffset), bytes_to_int(self.textFileEnd))
 
     def has_code_cave(self):
-        if (int.from_bytes(self.rodataMemoryOffset, byteorder='big', signed=False) -
-            (int.from_bytes(self.textDecompSize, byteorder='big', signed=False) +
-            int.from_bytes(self.textMemoryOffset, byteorder='big', signed=False)) ) > 0:
-            return True
-        else:
-            return False
+        return (bytes_to_int(self.rodataMemoryOffset) -
+                (bytes_to_int(self.textDecompSize) +
+                  bytes_to_int(self.textMemoryOffset)) ) > 0
     
-    def modify(self, code_type, relative_addr, contents):
-        if code_type == 'asm_main':
-            self.NSORaw[int.from_bytes(self.textFileOffset, byteorder='big', signed=False)+relative_addr :
-                         int.from_bytes(self.textFileOffset, byteorder='big', signed=False)+relative_addr+len(contents)] = contents
-        elif code_type == 'asm_cave':
-            if self.has_code_cave():
-                self.NSORaw[int.from_bytes(self.codeCaveStart, byteorder='big', signed=False)+relative_addr :
-                            int.from_bytes(self.codeCaveStart, byteorder='big', signed=False)+relative_addr+len(contents)] = contents
-        return
+    def modify(self, addr, bytes_content, in_code_cave = False):
+        if in_code_cave and not self.has_code_cave():
+            return
+
+        self.NSORaw4Mod[bytes_to_int(self.textFileOffset) + addr :
+                        bytes_to_int(self.textFileOffset) + addr + len(bytes_content)] = bytes_content
             
-    def to_Json(self, file_name: Optional[str] = None):
-        if self.has_code_cave():
-            json_data = {
+    def to_Json(self, file_path: Optional[str] = None):
+        code_cave = {
+                        "start": self.codeCaveStart.hex(),
+                        "end": self.codeCaveEnd.hex()
+                    } if self.has_code_cave() else None
+        json_data = {
                         "Magic": self.Magic,
                         "Flags": self.Flags.hex(),
                         "textFileOffset": self.textFileOffset.hex(),
@@ -130,34 +160,9 @@ class Main_File:  # parse header
                         "rodataDecompSize": self.rodataDecompSize.hex(),
                         "ModuleId": self.ModuleId,
                         "textFileEnd": self.textFileEnd.hex(),
-                        "codeCave":
-                        {
-                            "start": self.codeCaveStart.hex(),
-                            "end": self.codeCaveEnd.hex()
-                        }
+                        "codeCave":code_cave
                     }
-        else:
-            json_data = {
-                        "Magic": self.Magic,
-                        "Flags": self.Flags.hex(),
-                        "textFileOffset": self.textFileOffset.hex(),
-                        "textMemoryOffset": self.textMemoryOffset.hex(),
-                        "textDecompSize": self.textDecompSize.hex(),
-                        "ModuleNameOffset": self.ModuleNameOffset.hex(),
-                        "rodataFileOffset": self.rodataFileOffset.hex(),
-                        "rodataMemoryOffset": self.rodataMemoryOffset.hex(),
-                        "rodataDecompSize": self.rodataDecompSize.hex(),
-                        "ModuleId": self.ModuleId,
-                        "textFileEnd": self.textFileEnd.hex()
-                    }
-        if file_name is not None:
-            with open(f'{file_name}.json', 'w') as result_file:
+        if file_path is not None:
+            with open(f'{file_path}.json', 'w') as result_file:
                 json.dump(json_data, result_file, indent=1)
         return json_data
-    
-    def get_mainfunc_file(self):
-        if self.is_NSO_file():
-            self.mainFuncFile = self.saveFile[int.from_bytes(self.textFileOffset, byteorder='big', signed=False) : int.from_bytes(self.textFileEnd, byteorder='big', signed=False)]
-            return True
-        else:
-            return False

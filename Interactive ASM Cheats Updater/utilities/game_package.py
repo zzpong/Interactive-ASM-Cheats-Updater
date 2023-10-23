@@ -1,37 +1,62 @@
 import os, re
 from pathlib import Path
-# from nsz.NszDecompressor import decompress as NszDecompress  # Hints: works fine on python but not on .exe compilation due to "bar"
-from utilities.NszDecompressor import decompress as NszDecompress  # Hints: plz use this for .exe compilation
+from tkinter import messagebox
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from utilities.NszDecompressor import decompress as NszDecompress  # Hints: modified progress bar for tkinter
 from nsz.Fs import factory
 from struct import unpack
 from os import listdir
 from utilities.aes128 import AESECB,AESXTS,AESCTR
+from utilities.exception import GamePackageError
 
-import tkinter
-import tkinter.ttk
 
-class Game_Package:
-    def __init__(self, keys, loc) -> None:
-        self.keys = keys
-        self.loc_msg = loc
+class GamePackage:
+    def __init__(self, globalInfo):
+        self.key_path = globalInfo.root_path
+        self.msg_map = globalInfo.msg_map
+        self.keys = self.get_keys()
 
-        self.xcz_type = ['.XCZ', '.xcz']
-        self.nsz_type = ['.NSZ', '.nsz']
-        self.xci_type = ['.XCI', '.xci']
-        self.nsp_type = ['.NSP', '.nsp']
+    def get_keys(self):
+        keys = {}
+        key_file = Path(os.path.join(self.key_path, 'keys.txt'))
+        if not key_file.is_file():
+            key_file = Path.home().joinpath('.switch', 'prod.keys')
+        if not key_file.is_file():
+            messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['request keys'])))
+            raise GamePackageError('Keys not found!')
+        with open(key_file, encoding="utf8") as f:
+            for line in f.readlines():
+                pattern = re.match('\s*([a-z0-9_]+)\s*=\s*([A-F0-9]+)\s*', line, re.I)
+                if pattern:
+                    keys[pattern.group(1)] = bytes.fromhex(pattern.group(2))
+        return keys
 
     def find_largest_file(self, path) -> str:
         largest_file = {'name': None, 'size': 0}
         for root, dirs, files in os.walk(path):
-            if 'decompressed_nca' not in root:
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    file_size = os.path.getsize(file_path)
-                    if file_size > largest_file['size']:
-                        largest_file['name'] = file_path
-                        largest_file['size'] = file_size
+            if 'decompressed_nca' in root:
+                continue
+            for file in files:
+                file_path = os.path.join(root, file)
+                file_size = os.path.getsize(file_path)
+                if file_size > largest_file['size']:
+                    largest_file['name'] = file_path
+                    largest_file['size'] = file_size
         return largest_file['name']
     
+    def decrypt_aes_abc(self, data, key):
+    # Author: RiggZh
+    # data: titlekek_source  key: master_key_0x
+    # https://pycryptodome.readthedocs.io/en/latest/src/cipher/classic.html#ecb-mode
+    # https://stackoverflow.com/questions/52964138/how-can-i-decrypt-message-from-user-input-in-python-using-cryptography
+        decryptor = Cipher(
+            algorithms.AES(key),
+            modes.ECB(),
+            backend=default_backend()
+        ).decryptor()
+        return decryptor.update(data) + decryptor.finalize()
+
     def extract_ticket(self, tik_path):  # Refer to Eiffel2018 getMain.py
         with open(tik_path, 'rb') as f:
             signatureType = int.from_bytes(f.read(0x4), 'little')
@@ -46,9 +71,19 @@ class Game_Package:
             X, Y = ord(f.read(0x1)), ord(f.read(0x1))
             masterKeyRev = X if X > 0 else Y
             try:
-                title_kek = AESECB(self.keys['titlekek_%02x'%max(masterKeyRev-1, 0)]).decrypt(titleKey)
+                if 'titlekek_%02x'%max(masterKeyRev-1, 0) not in self.keys:
+                    if 'master_key_%02x'%max(masterKeyRev-1, 0) not in self.keys:
+                        self.logger.warning('\n'.join(eval(self.msg_map['required master key version'])))
+                        messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['required master key version'])))
+                        return [None, None]
+                    else:
+                        title_kek_0x = self.decrypt_aes_abc(self.keys['titlekek_source'], self.keys['master_key_%02x'%max(masterKeyRev-1, 0)])
+                        title_kek = AESECB(title_kek_0x).decrypt(titleKey)
+                else:
+                    title_kek = AESECB(self.keys['titlekek_%02x'%max(masterKeyRev-1, 0)]).decrypt(titleKey)
             except:
-                print('\n'.join(eval(self.loc_msg['required key version'])))
+                self.logger.warning('\n'.join(eval(self.msg_map['required title key version'])))
+                messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['required title key version'])))
                 return [None, None]
             f.seek(0x1A, 1)
             title_id = '%016X'%int.from_bytes(f.read(0x8), 'big')
@@ -57,7 +92,7 @@ class Game_Package:
 
     def extract_main_file_from_nca(self, nca_path, tik_path, game_path) -> str:  # Refer to Eiffel2018 getMain.py
         if tik_path is not None:
-            print('\n'.join(eval(self.loc_msg['Extract ticket'])))
+            print('\n'.join(eval(self.msg_map['Extract ticket'])))
             [title_kek, title_id] = self.extract_ticket(tik_path)
         else:
             title_kek = None
@@ -65,7 +100,7 @@ class Game_Package:
         
         try:
             with open(nca_path, 'rb') as f:
-                print('\n'.join(eval(self.loc_msg['Extract main'])))
+                print('\n'.join(eval(self.msg_map['Extract main'])))
                 header = AESXTS(self.keys['header_key']).decrypt(f.read(0xC00))
                 if header[0x200:0x204] != b'NCA3':
                     raise ValueError('Invalid NCA3 magic')
@@ -106,7 +141,7 @@ class Game_Package:
                                     break
                                 mainOffset += 0x4000
                             if exefsHeader[:0x4] != b'PFS0':
-                                raise IOError('PFS0 header error'%exefsHeader[:4])
+                                raise GamePackageError('PFS0 header error'%exefsHeader[:4])
                             fileCount, stringTableSize = unpack('<II',exefsHeader[0x4:0xC])
                             dataStart = 0x10 + fileCount*0x18 + stringTableSize
                             filenames = exefsHeader[0x10+0x18*fileCount: 0x10+0x18*fileCount+stringTableSize]
@@ -121,11 +156,11 @@ class Game_Package:
                                     NSO = crypto.decrypt(f.read((size//16)*16+16))[mainStart%16:size+(mainStart%16)]
                                     if NSO[:4] == b'NSO0':
                                         build_id = '%016X'%int.from_bytes(NSO[0x40:0x48], 'big')
-                                        main_path = os.path.join(os.path.dirname(game_path), f'main_{build_id}')
+                                        main_path = os.path.join(os.path.dirname(game_path), f'BID_{build_id}')
                                         self.generate_main_file(main_path, NSO)
                                         return main_path  # Warning: skip sdk extraction
                                     else:
-                                        raise IOError('main NSO0 header error! %s'%NSO[:4])
+                                        raise GamePackageError('main NSO0 header error! %s'%NSO[:4])
                                 elif filename == 'sdk': 
                                     sdkStart = mainOffset + startOffset + dataStart + offset
                                     crypto = AESCTR(cryptoKey, nonce, (sdkStart//16)*16)
@@ -136,10 +171,10 @@ class Game_Package:
                                         main_path = os.path.join(os.path.dirname(game_path), sdk_title)
                                         self.generate_main_file(main_path, NSO)
                                     else:
-                                        raise IOError('sdk NSO0 header error! %s'%NSO[:4])
+                                        raise GamePackageError('sdk NSO0 header error! %s'%NSO[:4])
             f.close()
         except:
-            print('\n'.join(eval(self.loc_msg['.nso extraction failed'])))
+            messagebox.showerror(title='Error', message='\n'.join(eval(self.msg_map['.nso extraction failed'])))
     
     def generate_main_file(self, main_path, bin):
         fo = open(main_path, 'bw')
@@ -165,56 +200,72 @@ class Game_Package:
                 return str(path)
         return None
 
+    def get_nca_from_xcx(self, container, out_folder, file_type):
+        out_folder = Path(str(out_folder) + '_' + file_type)
+        for hfs0 in container.hfs0:
+            secureIn = hfs0
+            if file_type == 'xci':
+                secureIn.unpack(out_folder.joinpath(hfs0._path), "^.*\.(nca|tik)$")
+            elif file_type == 'xcz':
+                secureIn.unpack(out_folder.joinpath(hfs0._path), "^.*\.(ncz|tik)$")
+
+        tik_path = self.check_ticket(out_folder.joinpath(hfs0._path))
+        if file_type == 'xci':
+            nca_path = self.find_largest_file(str(out_folder.joinpath('secure')))
+        elif file_type == 'xcz':
+            main_nsz_path = Path(self.find_largest_file(str(out_folder.joinpath('secure'))))
+            if not out_folder.joinpath('decompressed_nca').exists():
+                os.makedirs(out_folder.joinpath('decompressed_nca'))
+            NszDecompress(main_nsz_path,
+                out_folder.joinpath('decompressed_nca'), None)
+            nca_path = str(out_folder.joinpath('decompressed_nca', main_nsz_path.name))[:-1] + 'a'
+        
+        return (tik_path, nca_path)
+    
+    def get_nca_from_nsx(self, container, out_folder, file_type):
+        out_folder = Path(str(out_folder) + '_' + file_type)
+        if file_type == 'nsp':
+            container.unpack(out_folder, "^.*\.(nca|tik)$")
+        elif file_type == 'nsz':
+            container.unpack(out_folder, "^.*\.(ncz|tik)$")
+
+        tik_path = self.check_ticket(out_folder)
+        if file_type == 'nsp':
+            nca_path = self.find_largest_file(str(out_folder))
+        elif file_type == 'nsz':
+            main_nsz_path = Path(self.find_largest_file(str(out_folder)))
+            if not out_folder.joinpath('decompressed_nca').exists():
+                os.makedirs(out_folder.joinpath('decompressed_nca'))
+            NszDecompress(main_nsz_path,
+                out_folder.joinpath('decompressed_nca'), None)
+            nca_path = str(out_folder.joinpath('decompressed_nca', main_nsz_path.name))[:-1] + 'a'
+
+        return (tik_path, nca_path)
+
     def get_main_file(self, game_path) -> str:
         game_path = Path(game_path).resolve()
         nca_path = None
         tik_path = None
-        if game_path.is_file():
-            game_path_str = str(game_path)
-            out_folder = game_path.parent.absolute().joinpath(game_path.stem)
-            container = factory(game_path)
-            container.open(game_path_str, 'rb')
-            print('\n'.join(eval(self.loc_msg['Extract NCA'])))
-            if game_path.suffix in self.xcz_type:
-                out_folder = Path(str(out_folder) + '_xcz')
-                for hfs0 in container.hfs0:
-                    secureIn = hfs0
-                    secureIn.unpack(out_folder.joinpath(hfs0._path), "^.*\.(ncz|tik)$")
-                tik_path = self.check_ticket(out_folder.joinpath(hfs0._path))
-                main_nsz_path = Path(self.find_largest_file(str(out_folder.joinpath('secure'))))
-                if not out_folder.joinpath('decompressed_nca').exists():
-                    os.makedirs(out_folder.joinpath('decompressed_nca'))
-                NszDecompress(main_nsz_path,
-                    out_folder.joinpath('decompressed_nca'), None)
-                nca_path = str(out_folder.joinpath('decompressed_nca', main_nsz_path.name))[:-1] + 'a'
-            elif game_path.suffix in self.nsz_type:
-                out_folder = Path(str(out_folder) + '_nsz')
-                container.unpack(out_folder, "^.*\.(ncz|tik)$")
-                tik_path = self.check_ticket(out_folder)
-                main_nsz_path = Path(self.find_largest_file(str(out_folder)))
-                if not out_folder.joinpath('decompressed_nca').exists():
-                    os.makedirs(out_folder.joinpath('decompressed_nca'))
-                NszDecompress(main_nsz_path,
-                    out_folder.joinpath('decompressed_nca'), None)
-                nca_path = str(out_folder.joinpath('decompressed_nca', main_nsz_path.name))[:-1] + 'a'
-            elif game_path.suffix in self.xci_type:
-                out_folder = Path(str(out_folder) + '_xci')
-                for hfs0 in container.hfs0:
-                    secureIn = hfs0
-                    secureIn.unpack(out_folder.joinpath(hfs0._path), "^.*\.(nca|tik)$")
-                tik_path = self.check_ticket(out_folder.joinpath(hfs0._path))
-                nca_path = self.find_largest_file(str(out_folder.joinpath('secure')))
-            elif game_path.suffix in self.nsp_type:
-                out_folder = Path(str(out_folder) + '_nsp')
-                container.unpack(out_folder, "^.*\.(nca|tik)$")
-                tik_path = self.check_ticket(out_folder)
-                nca_path = self.find_largest_file(str(out_folder))
-            container.close()
-        else:
-            pass
-        
-        if nca_path is not None:
-            main_path = self.extract_main_file_from_nca(nca_path, tik_path, str(game_path))
-            return main_path
-        else:
+        if not game_path.is_file():
             return None
+        
+        game_path_str = str(game_path)
+        out_folder = game_path.parent.absolute().joinpath(game_path.stem)
+        container = factory(game_path)
+        container.open(game_path_str, 'rb')
+        print('\n'.join(eval(self.msg_map['Extract NCA'])))
+        if game_path.suffix.lower() == '.xcz':
+            (tik_path, nca_path) = self.get_nca_from_xcx(container, out_folder, file_type = 'xcz')
+        elif game_path.suffix.lower() == '.nsz':
+            (tik_path, nca_path) = self.get_nca_from_nsx(container, out_folder, file_type = 'nsz')
+        elif game_path.suffix.lower() == '.xci':
+            (tik_path, nca_path) = self.get_nca_from_xcx(container, out_folder, file_type = 'xci')
+        elif game_path.suffix.lower() == '.nsp':
+            (tik_path, nca_path) = self.get_nca_from_nsx(container, out_folder, file_type = 'nsp')
+        container.close()
+        
+        if nca_path is None:
+            return None
+            
+        main_path = self.extract_main_file_from_nca(nca_path, tik_path, str(game_path))
+        return main_path

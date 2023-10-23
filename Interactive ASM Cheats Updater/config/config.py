@@ -1,65 +1,102 @@
-extra_code_pattern = {
-    "code_0x2":
+code_pattern = {
+    "loc_EN":
     {
-        "pattern": "r'^20000000$'",
-        "pattern_match": "is_code[0]",
-        "code_length": 1,
-        "contents":
-                    {
-                            "code_type": "str('Extra')",
-                            "code_func": "str('End Condition Block')",
-                            "code_regen": "True",
-                            "memory_width": "0",
-                            "code_head": "is_code[0]",
-                            "code_addr": "None",
-                            "code_main": "None",
-                            "code_raw": "is_code"
-                    }
+        "code_type_0x0":
+        {
+            "pattern": "r'^ 0[12][abcdef\d]{6} *( * [abcdef\d]{8}){0,3} *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x0: Store Static Value to Memory',
+            "details":
+                    """[f'Code type 0x0 allows writing a static value to a memory address.']"""
+        },
+        "code_type_0x2":
+        {
+            "pattern": "r'^ *2[01]000000 *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x2: End Conditional Block',
+            "details":
+                """[f'Code type 0x2 marks the end of a conditional block (started by Code Type 0x1 or Code Type 0x8).',
+                    'When an Else is executed, all instructions until the appropriate End conditional block terminator are skipped.']"""
+        },
+        "code_type_0x8":
+        {
+            "pattern": "r'^ *(8)[abcdef\d]{7} *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x8: Begin Keypress Conditional Block',
+            "details":
+                    """[f'Code type 0x8 enters or skips a conditional block based on whether a key combination is pressed.']"""
+        },
+        "code_type_unknown":
+        {
+            "pattern": "r'^NEVER MATCH$'",
+            "generate_type": 'force_discard',
+            "description": 'Code Type Unknown: They Live Innocent and Pure',
+            "details":
+                    """[f'No unknowns were harmed in the making on this code.']"""
+        }
     },
-    "code_0x8":
-    {
-        "pattern": "r'^(8)[abcdef\d]{7}$'",
-        "pattern_match": "is_code[0]",
-        "code_length": 1,
-        "contents":
-                    {
-                            "code_type": "str('Extra')",
-                            "code_func": "str('Keypress Block')",
-                            "code_regen": "True",
-                            "memory_width": "0",
-                            "code_head": "is_code[0]",
-                            "code_addr": "None",
-                            "code_main": "None",
-                            "code_raw": "is_code"
-                    }
+    "loc_CN":
+        {
+        "code_type_0x0":
+        {
+            "pattern": "r'^ 0[12][abcdef\d]{6} *( * [abcdef\d]{8}){0,3} *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x0: 向指定内存地址存入数据',
+            "details":
+                    """[f'Code type 0x0 会向指定内存地址存入数据。']"""
+        },
+        "code_type_0x2":
+        {
+            "pattern": "r'^ *2[01]000000 *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x2: 结束标志',
+            "details":
+                """[f'Code type 0x2 为循环结束标志 (循环始于 Code Type 0x1 或 Code Type 0x8).',
+                    '在使用else指令时，此结束标志前的所有代码都将被跳过。']"""
+        },
+        "code_type_0x8":
+        {
+            "pattern": "r'^ *(8)[abcdef\d]{7} *$'",
+            "generate_type": 'flat_generate',
+            "description": 'Code Type 0x8: 按键触发标志',
+            "details":
+                    """[f'Code type 0x8 通过指定按键决定某条件单元是否被触发。']"""
+        },
+        "code_type_unknown":
+        {
+            "pattern": "r'^NEVER MATCH$'",
+            "generate_type": 'force_discard',
+            "description": 'Code Type Unknown: 你瞅啥？',
+            "details":
+                    """[f'这搭哪滴了它？']"""
+        }
     }
 }
 
 localization = {
     "loc_EN":
         {
-            "title": "Interactive ASM Cheats Updater ver 0.5 gamma",
+            "title": "Code Updater for Nintendo Switch ver 1.0.0",
             "wing_length_default": "[1, 1]",
-            "loc_extra_wing_length_default": "[2, 2]",
+            "extra_wing_length_default": "[2, 2]",
             "hints_map":
             {
                 "Old Main File:": "Old Main File:",
                 "New Main File:": "New Main File:",
-                "Debug": "Debug",
-                "Copy old cheats here:": "Copy old cheats here:",
-                "Current processing cheat:": "Current processing cheat:",
+                "ARM64": "Force ARM64",
+                "Input Old Codes:": "Input Old Codes:",
+                "Current Processing Codes:": "Current Processing Codes:",
                 "Wing Length:": "Wing Length:",
                 "Logs:": "Logs:",
-                "New cheats will be here:": "New cheats will be here:",
+                "New Codes Output:": "New Codes Output:",
                 "Load Old Main NSO File": "Load Old Main NSO File",
                 "Load New Main NSO File": "Load New Main NSO File",
-                "Save new cheats": "Save new cheats",
-                "Save new NSO": "Save new NSO",
-                "Old Main ASM:": "Old Main ASM:",
-                "New Main ASM:": "New Main ASM:",
+                "Save New Codes": "Save New Codes",
+                "Save New NSO": "Save New NSO",
+                "Old Assembly Codes:": "Old Assembly Codes:",
+                "New Assembly Codes:": "New Assembly Codes:",
                 "Extra Wing Length:": "Extra Length:",
-                # "Branch": "Switch to Branch Target ASM Code"
-                "Branch": "Switch to BL Target"
+                "Branch": "Switch to Branch"
             },
             "btn_map":
             {
@@ -67,22 +104,22 @@ localization = {
                 "Load New": "Load",
                 "Regenerate": "Regenerate",
                 "Generate": "Generate",
-                "Skip": "Skip",  # "Discard" is better here
+                "Skip": "Skip",
                 "Undo": "Undo",
                 "Restart": "Restart",
                 "SaveCHT": "SaveCHT",
                 "SaveNSO": "SaveNSO",
                 "GitHub": "Github",
+                "Update": "Update",
+                "Prev": "Prev Addr",
+                "Next": "Next Addr",
                 "copy": "copy",
                 "paste": "paste",
                 "cut": "cut",
-                "Update": "Update",
-                "Prev": "Prev Addr",
-                "Next": "Next Addr"
             },
             "msg_map":
             {
-                "request keys": """['No "keys.txt" file found in root of this app, cannot extract game packages.']""",
+                "request keys": """['No "keys.txt" found in the root of this app, cannot extract game packages.']""",
                 "required title key version": """[f'Required "titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
                 "required master key version": """[f'Required "master_key_{hex(masterKeyRev-1)[2:].zfill(2)}" not found in "keys.txt"!']""",
                 ".nso extraction failed": """['Extracting "main" from game package failed']""",
@@ -90,174 +127,65 @@ localization = {
                 "Extract NCA": """['Extracting NCA from game package ......']""",
                 "Extract ticket": """['Extracting ticket content from .tik ......']""",
                 "Extract main": """['Extracting main file from .nca ......']""",
+
                 "NOT NSO File": """['NOT NSO File.']""",
-                "DIR already exists": """['DIR already exists.']""",
                 "NSO file decompressed": """['NSO file decompressed.']""",
-                "BID message": """[f'BID of cheat code should be "{self.main_old_file.ModuleId.upper()}".']""",
-                "Pre-process message": """['080X0000 cheat codes have been splited into 04.']""",
+                "BID message": """[f'BID of the old codes should be "{self.old_main_file.ModuleId.upper()}".']""",
+                "Pre-process message": """['080X0000 codes have been splited into 04 atom codes.']""",
+
+                "nsnsotool warning": """['nsnsotool failed working']""",
+                "nsnsotool missing": """['tools/nsnsotool.exe missing']""",
+
                 "Wing length check message": """['Wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
                 "Extra wing length check message": """['Extra wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
-                "Unknown cheat format": """[f'Unknown cheat format removed: {i}']""",
+
+                "code_title": """['This is code title.']""",
+                "master_code_title": """['This is master code title.']""",
+                "asm_code": """[f'This is{asm_type} assembly code.']""",
+
+                "none_addr_located":  """[f'{addr_type}: None address located.']""",
+                "single_addr_located":  """[f'{addr_type}: Single address "{addr_str}" located.']""",
+                "multi_addr_located":  """[f'{addr_type}: Multiple address "{addr_str}" located.']""",
+
+                "flat_generate": """['--- Press "Generate" to export or "Skip" to discard ---']""",
+                "force_generate": """['--- Both "Generate" or "Skip" will export ---']""",
+                "force_discard": """['--- Both "Generate" or "Skip" will discard ---']""",
+
+                "discard_or_regen": """['--- Both "Generate" or "Skip" will discard, "Regenerate" to research ---']""",
+                "choose_or_regen": """['--- Press "Generate" to export the highlighted match from the Assembly Code Window, "Skip" to discard or "Regenerate" ---']""",
+
+                "wing_length_warn": """['*** Wing Length = [Branch Address Search Area, Branch Target Search Area] for NOW ***']""",
+                "value_warn": """['*** This ASM type code section ONLY has values. Please generate with caution. ***']""",
+
                 "Cheat Code": """['Cheat Code']""",
-                "NSO File": """['NSO File']""",
                 "Saved": """['Saved']""",
                 "OK": """['OK']""",
                 "Cancel": """['Cancel']""",
-                "nsnsotool warning": """['nsnsotool failed working']""",
-                "nsnsotool missing": """['tools/nsnsotool.exe missing']""",
-                "Not Main Code":"""['Code address not in .text or code cave, need precisely manual revision. Please remove the line and restart or contact author.']""",
-                "asm_normal_asm_no_addr": 
-                    """[f'This part is normal asm code. No address located, please change wing length and regenerate.',
-                        '--- Both "generate" or "skip" will discard, "regenerate" to research ---']""",
-                "asm_normal_asm_multi_addr": 
-                    """[f'This part is normal asm code. Multiple address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
-                "asm_normal_asm_single_addr":
-                    """[f'This part is normal asm code. Address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "asm_bl_cave_no_cave":
-                    """['This part is asm bl code in code cave. However, there is NO SPACE in the new game version.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_bl_cave_no_space":
-                    """['This part is asm bl code in code cave. Space of code cave in new game is critical now, you can skip other code cave to save this one.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_bl_cave_has_space":
-                    """[f'This part is asm bl code in code cave. New code cave {code_cave_addr} find.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "asm_bl_cave_to_outer":
-                    """['This part is asm bl code in code cave, but it points to .datasegment.',
-                        f'New code cave {code_cave_addr} find.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_bl_cave_to_cave":
-                    """['This part is asm bl code in code cave, but it points to code cave address which is not an asm code.',
-                        'Please restart and copy master code to the current processing cheat code part if any.',
-                        f'New code cave {code_cave_addr} find.',
-                        f'---  Please copy anything which titled master code here and restart process, or both "generate" or "skip" will discard ---']""",
-                "asm_bl_cave_no_addr":
-                    """['This part is asm bl code in code cave.',
-                        'Please restart and copy master code to the current processing cheat code part if any.',
-                        f'New code cave {code_cave_addr} find.',
-                        'Branch link search failed.',
-                        '--- Press "generate" to export original branch link address, "skip" to discard or "regenerate" ---']""",
-                "asm_bl_cave_multi_addr":
-                    """['This part is asm bl code in code cave.',
-                        f'New code cave {code_cave_addr} find.',
-                        f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
-                "asm_bl_cave_single_addr":
-                    """['This part is asm bl code in code cave.',
-                        f'New code cave {code_cave_addr} find.',
-                        f'Branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "asm_bl_no_addr":
-                    """['This part is asm bl code. No address located, please change wing length and regenerate.',
-                        '--- Both "generate" or "skip" will discard, "regenerate" to research ---']""",
-                "asm_bl_to_outer":
-                    """['This part is asm bl code which points to .datasegment, please check if any mistake happens.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_bl_to_cave":
-                    """['This part is asm bl code, but it points to code cave address which is not an asm code.',
-                        'Please restart and copy master code to the current processing cheat code part if any.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_bl_multi_to_none":
-                    """['This part is asm bl code.',
-                        f'Multiple address [{hit_start_addr_str}] located.',
-                        'Branch link search failed.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate", branch link unchanged ---',
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_single_to_none":
-                    """['This part is asm bl code.',
-                        f'Address [{hit_start_addr_str}] located.',
-                        'Branch link search failed.',
-                        '--- Press "generate" to export or "skip" to discard, branch link unchanged ---',
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_multi_to_multi":
-                    """['This part is asm bl code.',
-                        f'Multiple address [{hit_start_addr_str}] located.',
-                        f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---',
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_single_to_multi":
-                    """['This part is asm bl code.',
-                        f'Address [{hit_start_addr_str}] located.',
-                        f'Multiple branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export, "skip" to discard or "regenerate", the branch link match that highlighted in New Main ASM window selected ---'
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_multi_to_single":
-                    """['This part is asm bl code.',
-                        f'Multiple address [{hit_start_addr_str}] located.',
-                        f'Branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---',
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_single_to_single":
-                    """['This part is asm bl code.',
-                        f'Address [{hit_start_addr_str}] located.',
-                        f'Branch link [{bl_target_hit_start_addr_str}] located.',
-                        '--- Press "generate" to export or "skip" to discard ---',
-                        '*** wing length = [search area for Address, search area for Branch link] for NOW ***']""",
-                "asm_bl_multi_to_exist":
-                    """[f'This part is asm bl code. Multiple address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export the match that highlighted in New Main ASM window, "skip" to discard or "regenerate" ---']""",
-                "asm_bl_single_to_exist":
-                    """[f'This part is asm bl code. Address [{hit_start_addr_str}] located.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "no_code":
-                    """['This part is cheat title or comments which has no effect on cheat functions.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "code_but_no_asm":
-                    """['This part is memory cheat which always changes with updates.',
-                        '--- Press "generate" to export all or "skip" to export title only ---']""",
-                "asm_title":
-                    """['This part is title of asm code.',
-                        '--- Both "generate" and "skip" will export the title ---']""",
-                "asm_normal_code":
-                    """['This part is normal code part of asm code, which should be some static value for corresponding asm codes.',
-                        '--- Press "generate" to export updated addr or "skip" to export origin one ---']""",
-                "asm_cave_code_no_cave":
-                    """['This part is code cave of asm code. However, there is NO SPACE in the new game version.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_cave_code_no_space":
-                    """['This part is code cave of asm code. Space of code cave in new game is critical now, you can skip other code cave to save this one.',
-                        '--- Both "generate" or "skip" will discard ---']""",
-                "asm_cave_code_has_space":
-                    """[f'This part is code cave of asm bl code. New code cave {code_cave_addr} find.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "End Condition Block":
-                    """[f'This part is loop break of cheat code format.',
-                        'Code format 0x2: All instructions after this end conditional block terminator will be skipped',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "Keypress Block":
-                    """[f'This part is keypress condition of cheat code format.',
-                        'Code format 0x8: Enters or skips a conditional block based on whether a key combination is pressed.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
-                "Code Unknown":
-                    """[f'This part is unknown or improper cheat code format. Function under construction.',
-                        '--- Press "generate" to export or "skip" to discard ---']""",
+                "NSO File": """['NSO File']""",
             }
         },
  "loc_CN":
-        {
-            "title": "金手指自动更新器 ver 0.5c gamma",
+         {
+            "title": "金手指自动更新器 ver 1.0.0c",
             "wing_length_default": "[1, 1]",
-            "loc_extra_wing_length_default": "[2, 2]",
+            "extra_wing_length_default": "[2, 2]",
             "hints_map":
             {
-                "Old Main File:": "金手指对应Main:",
-                "New Main File:": "目标版本Main:",
-                "Debug": "调试",
-                "Copy old cheats here:": "旧版金手指输入:",
-                "Current processing cheat:": "当前处理金手指:",
-                "Wing Length:": "翼展宽度:",
-                "Logs:": "提示:",
-                "New cheats will be here:": "新版本金手指输出:",
-                "Load Old Main NSO File": "载入旧版Main文件",
-                "Load New Main NSO File": "载入新版Main文件",
-                "Save new cheats": "保存新版金手指",
-                "Save new NSO": "保存新版NSO",
-                "Old Main ASM:": "旧版ASM源码:",
-                "New Main ASM:": "新版ASM源码:",
-                "Extra Wing Length:": "额外宽度:",
-                # "Branch": "切换至跳转目标区域ASM代码"
+                "Old Main File:": "金手指对应Main：",
+                "New Main File:": "目标版本Main：",
+                "ARM64": "强制ARM64",
+                "Input Old Codes:": "旧金手指输入：",
+                "Current Processing Codes:": "当前处理金手指：",
+                "Wing Length:": "翼展宽度：",
+                "Logs:": "提示：",
+                "New Codes Output:": "新金手指输出：",
+                "Load Old Main NSO File": "载入金手指对应Main文件",
+                "Load New Main NSO File": "载入目标Main文件",
+                "Save New Codes": "保存新金手指",
+                "Save New NSO": "保存新NSO",
+                "Old Assembly Codes:": "旧版ASM源码：",
+                "New Assembly Codes:": "新版ASM源码：",
+                "Extra Wing Length:": "额外翼展宽度：",
                 "Branch": "切换至跳转目标代码"
             },
             "btn_map":
@@ -272,166 +200,58 @@ localization = {
                 "SaveCHT": "保存CHT",
                 "SaveNSO": "保存NSO",
                 "GitHub": "Github",
+                "Update": "更新",
+                "Prev": "上个地址",
+                "Next": "下个地址",
                 "copy": "复制",
                 "paste": "粘贴",
                 "cut": "剪切",
-                "Update": "更新",
-                "Prev": "上个地址",
-                "Next": "下个地址"
             },
             "msg_map":
             {
-                "request keys": """['本程序根目录下未找到 "keys.txt" 文件，将无法自动解包游戏']""",
+                "request keys": """['本程序根目录下未找到 "keys.txt" 文件，无法自动解包游戏。']""",
                 "required title key version": """[f'"keys.txt"中未找到"titlekek_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
                 "required master key version": """[f'"keys.txt"中未找到"master_key_{hex(masterKeyRev-1)[2:].zfill(2)}"!']""",
                 ".nso extraction failed": """['从游戏中提取 "main" 文件失败']""",
-                "Unpack Warning": """[f'解包 "{Path(file_path).suffix}" 文件需要一段时间，还请耐心等待']""",
+                "Unpack Warning": """[f'解包 "{Path(file_path).suffix}" 文件需要一段时间，请耐心等待']""",
                 "Extract NCA": """['从游戏包提取NCA文件中......']""",
                 "Extract ticket": """['从.tik获取相关信息中......']""",
                 "Extract main": """['从.nca提取main文件中......']""",
+
                 "NOT NSO File": """['文件不合法']""",
-                "DIR already exists": """['路径已存在']""",
-                "NSO file decompressed": """['已自动解压Main文件']""",
-                "BID message": """[f'金手指文件名（BID）必须为 "{self.main_old_file.ModuleId.upper()}"']""",
+                "NSO file decompressed": """['已自动解压main文件']""",
+                "BID message": """[f'金手指文件名（BID）必须为 "{self.old_main_file.ModuleId.upper()}"']""",
                 "Pre-process message": """['080X0000金手指代码已自动缩减为04原子代码']""",
-                "Wing length check message": """['翼展宽度必须为整数，如："20"，"[15,10]"']""",
-                "Extra wing length check message": """['额外宽度必须为整数，如："20"，"[15,10]"']""",
-                "Unknown cheat format": """[f'未知金手指代码已移除：{i}']""",
-                "Cheat Code": """['金手指代码']""",
-                "NSO File": """['NSO文件']""",
-                "Saved": """['已保存']""",
-                "OK": """['确定']""",
-                "Cancel": """['取消']""",
+
                 "nsnsotool warning": """['nsnsotool未正常工作']""",
                 "nsnsotool missing": """['tools/nsnsotool.exe文件丢失']""",
-                "Not Main Code":"""['这部分金手指地址不在.text及code cave区间，需手动精确修正。请移除该部分金手指后重新生成，或联系作者更新。']""",
-                "asm_normal_asm_no_addr": 
-                    """[f'这是普通ASM金手指代码，未找到新地址，请修改翼展宽度并点击重新生成按钮。',
-                        '--- “生成”与“跳过”按钮均会跳过生成，或使用“重新生成”按钮重新搜索 ---']""",
-                "asm_normal_asm_multi_addr": 
-                    """[f'这是普通ASM金手指代码，多个新地址[{hit_start_addr_str}]已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
-                "asm_normal_asm_single_addr":
-                    """[f'这是普通ASM金手指代码，单个新地址[{hit_start_addr_str}]已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "asm_bl_cave_no_cave":
-                    """['这是在code cave中的ASM跳转代码，可惜新版本中并未找到code cave空间。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_cave_no_space":
-                    """['这是在code cave中的ASM跳转代码。新版本code cave空间占用已满，请移除其他code cave代码后重试。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_cave_has_space":
-                    """[f'这是在code cave中的ASM跳转代码。新code cave {code_cave_addr} 已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "asm_bl_cave_to_outer":
-                    """['这是在code cave中的ASM跳转代码，但其指向无效空间.datasegment。',
-                        f'新code cave {code_cave_addr} 已定位。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_cave_to_cave":
-                    """['这是在code cave中的ASM跳转代码，但其指向非ASM代码。',
-                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
-                        f'新code cave {code_cave_addr} 已定位。',
-                        f'--- 请将必须码复制到此项金手指中并“重置”进程，否则“生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_cave_no_addr":
-                    """['这是在code cave中的ASM跳转代码。',
-                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
-                        f'新code cave {code_cave_addr} 已定位。',
-                        '跳转地址定位失败。',
-                        '--- 使用“生成”按钮导出原始跳转地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
-                "asm_bl_cave_multi_addr":
-                    """['这是在code cave中的ASM跳转代码。',
-                        f'新code cave {code_cave_addr} 已定位。',
-                        f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
-                "asm_bl_cave_single_addr":
-                    """['这是在code cave中的ASM跳转代码。',
-                        f'新code cave {code_cave_addr} 已定位。',
-                        f'单跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "asm_bl_no_addr":
-                    """['这是ASM跳转代码，未定位到地址，请修改翼展宽度后重新生成。',
-                        '--- “生成”与“跳过”按钮均会跳过生成，或使用“重新生成”按钮重新搜索 ---']""",
-                "asm_bl_to_outer":
-                    """['这是ASM跳转代码，但指向.datasegment，请查看金手指代码是否有误。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_to_cave":
-                    """['这是ASM跳转代码，但其指向非ASM代码。',
-                        '若存在大师码，请使用重置功能后将大师码内容复制到此代码处重新生成。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_bl_multi_to_none":
-                    """['这是ASM跳转代码。',
-                        f'多个新地址 [{hit_start_addr_str}] 已定位。',
-                        '跳转地址定位失败。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮。当前跳转地址未变更 ---',
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_single_to_none":
-                    """['这是ASM跳转代码。',
-                        f'单个新地址 [{hit_start_addr_str}] 已定位。',
-                        '跳转地址定位失败。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指。当前跳转地址未变更 ---',
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_multi_to_multi":
-                    """['这是ASM跳转代码。',
-                        f'多个新地址 [{hit_start_addr_str}] 已定位。',
-                        f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_single_to_multi":
-                    """['这是ASM跳转代码。',
-                        f'单个新地址 [{hit_start_addr_str}] 已定位。',
-                        f'多跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---'
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_multi_to_single":
-                    """['这是ASM跳转代码。',
-                        f'多个新地址 [{hit_start_addr_str}] 已定位。',
-                        f'单跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---',
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_single_to_single":
-                    """['这是ASM跳转代码。',
-                        f'单个新地址 [{hit_start_addr_str}] 已定位。',
-                        f'单跳转地址 [{bl_target_hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---',
-                        '*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
-                "asm_bl_multi_to_exist":
-                    """[f'这是ASM跳转代码。 多个新地址 [{hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮导出“新版ASM源码窗口”高亮地址，“跳过”按钮跳过生成，或点击“重新生成”按钮 ---']""",
-                "asm_bl_single_to_exist":
-                    """[f'这是ASM跳转代码。 地址 [{hit_start_addr_str}] 已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "no_code":
-                    """['这是不影响金手指功能的标题或注释文本。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "code_but_no_asm":
-                    """['这是金手指的内存代码部分，它基本每次都随游戏版本变化，无法自动更新。',
-                        '--- 使用“生成”按钮导出全部内容，或“跳过”按钮仅导出标题 ---']""",
-                "asm_title":
-                    """['这是ASM代码的标题。',
-                        '--- “生成”与“跳过”按钮均会仅导出标题 ---']""",
-                "asm_normal_code":
-                    """['这是ASM代码中的内存代码部分，通常为附近ASM所需常量数据。',
-                        '--- 使用“生成”按钮生成并更新地址，或“跳过”按钮跳过地址更新 ---']""",
-                "asm_cave_code_no_cave":
-                    """['这是在code cave中的ASM代码，但新版本游戏中不存在code cave。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_cave_code_no_space":
-                    """['这是在code cave中的ASM代码，但新版本code cave空间占用已满，请移除其他code cave代码后重试。',
-                        '--- “生成”与“跳过”按钮均会跳过生成 ---']""",
-                "asm_cave_code_has_space":
-                    """[f'这是在code cave中的ASM代码，新code cave {code_cave_addr} 已定位。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "End Condition Block":
-                    """[f'这是退出循环的金手指指令代码。',
-                        '代码标志0x2：跳过其后所有循环过程。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "Keypress Block":
-                    """[f'这是按键相关的金手指指令代码。',
-                        '代码标志0x8：通过特定按键执行特定功能。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']""",
-                "Code Unknown":
-                    """[f'这是未识别或错误的金手指格式，更多功能将在新版本追加。',
-                        '--- 使用“生成”按钮生成，或“跳过”按钮均跳过生成金手指 ---']"""
+
+                "Wing length check message": """['翼展宽度必须为整数，如："20"，"[15,10]"']""",
+                "Extra wing length check message": """['额外翼展宽度必须为整数，如："20"，"[15,10]"']""",
+
+                "code_title": """['这是普通码标题。']""",
+                "master_code_title": """['这是大师码标题。']""",
+                "asm_code": """[f'这是{asm_type} 汇编码。']""",
+
+                "none_addr_located":  """[f'{addr_type}：未找到地址。']""",
+                "single_addr_located":  """[f'{addr_type}：地址 "{addr_str}" 已定位。']""",
+                "multi_addr_located":  """[f'{addr_type}: 多地址 "{addr_str}" 已定位。']""",
+
+                "flat_generate": """['--- “生成”按钮生成，“跳过”按钮跳过此金手指 ---']""",
+                "force_generate": """['--- “生成”与“跳过”按钮均会生成此金手指 ---']""",
+                "force_discard": """['--- “生成”与“跳过”按钮均会跳过此金手指 ---']""",
+
+                "discard_or_regen": """['--- “生成”与“跳过”按钮均会跳过此金手指，或使用“重新生成”按钮重新定位 ---']""",
+                "choose_or_regen": """['--- “生成”按钮使用“新版ASM源码窗口”高亮地址生成，“跳过”按钮跳过此金手指，或使用“重新生成”按钮重新定位 ---']""",
+
+                "wing_length_warn": """['*** 此处翼展宽度 = [金手指代码地址搜索区域，跳转目标地址搜索区域] ***']""",
+                "value_warn": """['*** 这部分汇编码仅包含数值部分，请谨慎“生成”。 ***']""",
+
+                "Cheat Code": """['Cheat Code']""",
+                "Saved": """['Saved']""",
+                "OK": """['OK']""",
+                "Cancel": """['Cancel']""",
+                "NSO File": """['NSO File']""",
             }
         }
 }
