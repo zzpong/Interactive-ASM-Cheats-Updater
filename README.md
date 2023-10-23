@@ -1,8 +1,8 @@
-# Interactive-ASM-Cheats-Updater
+# Code Updater for Nintendo Switch
 
 ![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.8+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
 
-This updater unlocks your ability of updating most of the ASM cheats for Nintendo Switch.
+Unlocks your ability of updating ASM codes for Nintendo Switch.
 
 ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_capture.png)
 
@@ -24,23 +24,24 @@ This updater unlocks your ability of updating most of the ASM cheats for Nintend
 
 ## Functions
 
-![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Stable-Branch/program_icon.jpg)
+![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_icon.jpg)
 
-Now supports (same logic with cheats makers updating their codes like AOB):
-- [x] Update cheat codes to other locales (if they don't rewrite the game code, then yes)
-- [x] Upgrade or degrade cheat codes for all available version if no game major shift
-- [x] ARM64/ARM32 cheat codes update with automatic sorting
+Now supports:
+- [x] Migrate codes to games from different distribution areas
+- [x] Upgrade or degrade codes for all available game versions
 - [x] XCZ/XCI/NSP/NSZ game packages auto extraction
-- [x] Search the whole main file for code features
-- [x] Update normal ASM codes
-- [x] Update multiple code cave codes with preserved structures
-- [x] Skip page/pageoff codes
+- [x] ARM64/ARM32 codes update with automatic sorting
 - [x] Recognize branch codes and modify their pointer
-- [x] Auto fill cheat bids when saving .txt file
-- [x] Save modified .NSO file base on cheats
+- [x] Update multiple code cave codes with precisely structures
+- [x] Save modified .txt or .NSO file as you like
 
-TODO:
-- [ ] Updating codes in .rodata or somewhere else (aka. high probability breaking the new game :cold_sweat:)
+What's new:
+- [x] Catchy tool title (which is very important)
+- [x] Faster code feature localization algorithm
+- [x] Support master/normal code cross branches
+- [x] Support codes in .rodata
+- [x] Customizable code type recognization
+- [x] Detailed logs if error occurs
 
 
 ## Quick Start Guide
@@ -81,7 +82,7 @@ Logs window has everything you need when updating cheat codes.
 | Branch with target address | wing length for bl address | wing length for bl target address | :x: | 
 
 * **Regenerate**: Useful when logs window show "address not found". Please change wing length and regenerate until single hit, or maybe double.
-* **Debug**: Generate a debug folder with procedure files to show you what happend during the whole progress.
+* **Force ARM64**: Force the tool to disassemble codes as ARM64.
 
 #### Save cheat codes with "SaveCHT" button
 
