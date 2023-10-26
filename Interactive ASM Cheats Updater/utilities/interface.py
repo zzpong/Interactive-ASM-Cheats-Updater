@@ -27,7 +27,7 @@ def bytes_to_int(bytearray):
 
 class Stdout_Redirect:
     def __init__(self, fetched_text_widget):
-        self.log_out = fetched_text_widget.log_out
+        self.log_out = fetched_text_widget.log_text_out
         self.stdout_bak = sys.stdout
         self.stderr_bak = sys.stderr
         sys.stdout = self
@@ -36,7 +36,7 @@ class Stdout_Redirect:
     def write(self, msg):
         if msg == ' ' or msg == '\n':
             return
-        self.log_text_out(msg, False)
+        self.log_out(msg, False)
 
     def restore_std(self):
         self.log_out = None
