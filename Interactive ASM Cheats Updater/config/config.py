@@ -364,7 +364,7 @@ localization = {
         },
  "loc_CN":
          {
-            "title": "金手指自动更新器 ver 1.0.1c",
+            "title": "金手指自动更新器 ver 1.0.2c",
             "wing_length_default": "[1, 1]",
             "extra_wing_length_default": "[2, 2]",
             "hints_map":
