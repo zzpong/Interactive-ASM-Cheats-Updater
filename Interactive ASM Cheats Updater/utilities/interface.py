@@ -1473,7 +1473,7 @@ class CodeUpdaterInterface:
                     commands = ('cd tools\n'
                                 f'nsnsotool "{file_path}"\n'
                             )
-                    process.communicate(commands.encode('gbk'))
+                    process.communicate(commands.encode('utf-8'))
                 else:
                     messagebox.showerror(title='Error', message='\n'.join(eval(self.msg_map['nsnsotool missing'])))
 

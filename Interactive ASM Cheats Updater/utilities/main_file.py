@@ -1,4 +1,4 @@
-import os, json, shutil, time, subprocess
+import os, json, shutil, time, subprocess, chardet
 from copy import deepcopy
 from tkinter import messagebox
 from typing import Optional
@@ -71,14 +71,30 @@ class MainNSOStruct:
             commands = ('cd tools\n'
                         f'nsnsotool "{self.file_path}"\n'
                     )
-            outs, errs = process.communicate(commands.encode('gbk'))
-            content = [z.strip() for z in outs.decode('gbk').split('\n') if z]
-            print(*content, sep="\n")
+            outs, errs = process.communicate(commands.encode('utf-8'))
+            content = self.decode_outs_from_system(outs)
+            if content is not None:
+                print(*content, sep="\n")
         except Exception as e:
             messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool warning']))
             raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool warning'])))
         
         self.logger.info(generate_msg(self.msg_map['NSO file decompressed']))
+
+    def decode_outs_from_system(self, outs):
+        encode_type = chardet.detect(outs)['encoding']
+        try:
+            contents = [z.strip() for z in outs.decode(encode_type).split('\n') if z]
+        except:
+            try:
+                contents = [z.strip() for z in outs.decode('latin-1').split('\n') if z]
+            except:
+                try:
+                    contents = [z.strip() for z in outs.decode('latin-1', 'ignore').split('\n') if z]
+                except:
+                    contents = None
+
+        return contents
 
     def get_struct_from_file(self):
         buf = bytearray(os.path.getsize(self.file_path))
