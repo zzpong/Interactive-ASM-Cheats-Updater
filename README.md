@@ -66,7 +66,8 @@ There are lots of excellent works for you to dump the main file, like [hactool](
 
 #### Load main file and copy cheat codes (or load the gamepackages (super ones excluded) directly if version > 0.5.0)
 Build ID of the old main file will be shown after loading. Please make sure it is the same with the old cheat.
-Please unpack game packages and load main files manually if automatic dumping process failed to work.
+
+** Please unpack game packages and load main files manually if automatic dumping process failed to work.
 
 #### Interactively updating the cheat codes
 Logs window has everything you need when updating cheat codes.
