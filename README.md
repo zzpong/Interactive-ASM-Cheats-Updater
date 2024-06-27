@@ -94,7 +94,7 @@ Logs window has everything you need when updating cheat codes.
 ### Pre-Requisites For Build
 * Python 3.9
 * Packages in requirements.txt
-* [upx](https://github.com/upx/upx) (if bundling to one file need)
+* [upx](https://github.com/upx/upx) (optional)
 * Spec file for pyinstaller (refer [here](https://pyinstaller.org/en/stable/spec-files.html) for more info)
 
 ### Hints For Pre-Requisites
@@ -113,10 +113,10 @@ Logs window has everything you need when updating cheat codes.
     py -3.9 -m pip install -r requirements.txt
 
 #### Run the project
-    py -3.9 __main__.py
+    py -3.9 NSCodeUpdater.py
     
-#### OR build the project
-    pyinstaller -F -w your_spec_name.spec --upx-dir your_upx_dir
+#### OR build the project (noupx)
+    pyinstaller -F NSCodeUpdater.py --clean --noupx --collect-binaries capstone --collect-binaries keystone -w -n NSCodeUpdater_en -i xcw.ico
 
 
 ## Trouble Shooting

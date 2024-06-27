@@ -4,7 +4,7 @@ class Logger:
     def __init__(self, path = None):
         self.logger = logging.getLogger(__name__)
         formater = logging.Formatter(
-            '[%(asctime)s] %(levelname)s: %(message)s')
+            '[%(asctime)s.%(msecs)03d] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         
         if path is not None:
             logger_path = os.path.join(path, 'log')

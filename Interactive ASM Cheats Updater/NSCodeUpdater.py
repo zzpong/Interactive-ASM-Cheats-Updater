@@ -13,18 +13,20 @@ def main(language: str):
 class GlobalInfo:  # Read-ONLY Property
     def __init__(self, root_path: str, language: str):
         self.root_path = root_path
-        self.back_path = os.path.join(self.root_path, 'back_up')
-        self.tool_path = os.path.join(self.root_path, 'tools')
         self.log_path = os.path.join(self.root_path, 'log')
 
         self.logger = Logger(root_path)
 
         self.title = localization[language]['title']
+        self.msgbox_title_map = localization[language]['msgbox_title_map']
         self.hints_map = localization[language]['hints_map']
         self.btn_map = localization[language]['btn_map']
         self.msg_map = localization[language]['msg_map']
-        self.wing_length_default = localization[language]['wing_length_default']
-        self.extra_wing_length_default = localization[language]['extra_wing_length_default']
+        self.str_map = localization[language]['str_map']
+        self.wing_length_default = configuration['wing_length_default']
+        self.extra_wing_length_default = configuration['extra_wing_length_default']
+        self.widen_hit_num = int(configuration['widen_hit_num'])
+        self.max_hit_num = int(configuration['max_hit_num'])
 
         self.code_pattern = code_pattern[language]
 
@@ -33,3 +35,4 @@ class GlobalInfo:  # Read-ONLY Property
 
 if __name__ == '__main__':
     main('loc_EN')
+    # main('loc_CN')

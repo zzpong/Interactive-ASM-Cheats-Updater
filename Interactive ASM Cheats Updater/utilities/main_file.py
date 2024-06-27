@@ -1,10 +1,11 @@
-import os, json, shutil, time, subprocess, chardet
+import os, json, shutil, time, subprocess, chardet, struct, io
 from copy import deepcopy
 from tkinter import messagebox
 from typing import Optional
 from asyncio.subprocess import PIPE, STDOUT
 
 from utilities.exception import MainNSOError
+from utilities.nsnsotool import NSOfile
 
 
 def bytearray_slice(bytearray, loc, byteorderbig = False):
@@ -16,16 +17,36 @@ def bytearray_slice(bytearray, loc, byteorderbig = False):
 def bytes_to_int(bytearray):
     return int.from_bytes(bytearray, byteorder='big', signed=False)
 
-generate_msg = lambda x:'\n'.join(eval(x))
+def arm_4bytes_to_bits(byte_data: bytearray) -> bytes:
+    if not byte_data:
+        return b''
+
+    padding_needed = 4 - (len(byte_data) % 4) if len(byte_data) % 4 else 0
+    byte_data += b'\x00' * padding_needed
+
+    output = io.BytesIO()
+    num_ints = len(byte_data) // 4
+    for i in range(num_ints):
+        packed_value = struct.unpack_from('<I', byte_data, i * 4)[0]
+        binary_string = format(packed_value, '032b')
+        output.write(binary_string.encode() + b' ')
+
+    return output.getvalue()
+
+def get_pages_size(code_size):
+    return ((code_size & 0xFFFFF000) + 0x1000)
+
+generate_msg = lambda x:'\n'.join(eval(x))  # just for static characters
 
 
 class MainNSOStruct:
     def __init__(self, file_path: str, globalInfo) -> None:
         self.file_path = file_path
+        self.globalInfo = globalInfo
         self.logger = globalInfo.logger
         self.msg_map = globalInfo.msg_map
-        self.back_path = globalInfo.back_path
-        self.tool_path = globalInfo.tool_path
+        self.str_map = globalInfo.str_map
+        self.msgbox_title_map = globalInfo.msgbox_title_map
 
         self.Magic = ''
         self.Flags = bytearray(4)
@@ -36,49 +57,56 @@ class MainNSOStruct:
         self.rodataFileOffset = bytearray(4)  # rodata base address in main file
         self.rodataMemoryOffset = bytearray(4)  # rodata base address in console memory
         self.rodataDecompSize = bytearray(4)
+        self.ModuleSize = bytearray(4)
+        self.rwdataFileOffset = bytearray(4)  # rwdata base address in main file
+        self.rwdataMemoryOffset = bytearray(4)  # rwdata base address in console memory
+        self.rwdataDecompSize = bytearray(4)
+        self.bssSize = bytearray(4)
         self.ModuleId = ''  # build_id
+
         self.textFileEnd = bytearray(4)
         self.codeCaveStart = bytearray(4)
         self.codeCaveEnd = bytearray(4)
+        self.bssMemoryOffset = bytearray(4)  # bss base address in console memory
 
-        self.NSORaw = bytearray()
+        self.rodataStart = 0x0
+        self.rodataEnd = 0x0
+        self.rwdataStart = 0x0
+        self.rwdataEnd = 0x0
+        self.bssStart = 0x0
+        self.bssEnd = 0x0
+        self.multimediaStart = 0x0
+
+        self.NSORaw = None
         self.NSORaw4Mod = bytearray()
         self.mainFuncFile = bytearray()
+        self.mainFuncFile_bits = b''
 
     def process_file(self):
         if not self.is_NSO_file():
+            messagebox.showerror(title=self.msgbox_title_map['Error'], message=generate_msg(self.msg_map['NOT NSO File']))
             raise MainNSOError(generate_msg(self.msg_map['NOT NSO File']))
         else:
             if self.is_Compressed():
                 self.decompress()
             self.get_struct_from_file()
             self.get_mainfunc_file()
+            if len(self.Flags) == 0 or (int.from_bytes(self.Flags, 'little') & 0b111):
+                messagebox.showerror(title=self.msgbox_title_map['Error'], message=generate_msg(self.msg_map['NSO file decompression failed']))
+                raise MainNSOError(generate_msg(self.msg_map['NSO file decompression failed']))
             return True
 
     def decompress(self):
-        file_name = os.path.basename(self.file_path)
-        if not os.path.exists(self.back_path):
-            os.makedirs(self.back_path)
-       
-        back_file_path = os.path.join(self.back_path, f'{file_name}_❀{int(time.time())}.bak')
-        shutil.copyfile(self.file_path, back_file_path)
-        if not os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
-            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool missing']))
-            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool missing'])))
-
         try:
-            process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-            commands = ('cd tools\n'
-                        f'nsnsotool "{self.file_path}"\n'
-                    )
-            outs, errs = process.communicate(commands.encode('utf-8'))
-            content = self.decode_outs_from_system(outs)
-            if content is not None:
-                print(*content, sep="\n")
+            org_file = NSOfile(self.file_path, self.globalInfo)
+            org_file.process_file()
+            if org_file.is_Compressed():
+                dec_file_path = org_file.generate_dec_path(self.file_path)
+                org_file.self_decompress()
         except Exception as e:
-            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool warning']))
-            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool warning'])))
-        
+            messagebox.showerror(title=self.msgbox_title_map['Error'], message=generate_msg(self.msg_map['NSO file decompression failed']))
+            raise MainNSOError(generate_msg(self.msg_map['NSO file decompression failed']))
+
         self.logger.info(generate_msg(self.msg_map['NSO file decompressed']))
 
     def decode_outs_from_system(self, outs):
@@ -97,24 +125,27 @@ class MainNSOStruct:
         return contents
 
     def get_struct_from_file(self):
-        buf = bytearray(os.path.getsize(self.file_path))
+        self.NSORaw = bytearray(os.path.getsize(self.file_path))
         with open(self.file_path, 'rb') as fp:
-            fp.readinto(buf)
-        self.NSORaw = buf
-        self.NSORaw4Mod = deepcopy(self.NSORaw)
+            fp.readinto(self.NSORaw)
 
-        self.Magic = bytearray_slice(buf, 0, byteorderbig = False).decode('unicode_escape')
-        self.Flags = bytearray_slice(buf, 3, byteorderbig = False)
-        self.textFileOffset = bytearray_slice(buf, 4, byteorderbig = True)
-        self.textMemoryOffset = bytearray_slice(buf, 5, byteorderbig = True)
-        self.textDecompSize = bytearray_slice(buf, 6, byteorderbig = True)
-        self.ModuleNameOffset = bytearray_slice(buf, 7, byteorderbig = True)
-        self.rodataFileOffset = bytearray_slice(buf, 8, byteorderbig = True)
-        self.rodataMemoryOffset = bytearray_slice(buf, 9, byteorderbig = True)
-        self.rodataDecompSize = bytearray_slice(buf, 10, byteorderbig = True)
+        self.Magic = bytearray_slice(self.NSORaw, 0, byteorderbig = False).decode('unicode_escape')
+        self.Flags = bytearray_slice(self.NSORaw, 3, byteorderbig = False)
+        self.textFileOffset = bytearray_slice(self.NSORaw, 4, byteorderbig = True)
+        self.textMemoryOffset = bytearray_slice(self.NSORaw, 5, byteorderbig = True)
+        self.textDecompSize = bytearray_slice(self.NSORaw, 6, byteorderbig = True)
+        self.ModuleNameOffset = bytearray_slice(self.NSORaw, 7, byteorderbig = True)
+        self.rodataFileOffset = bytearray_slice(self.NSORaw, 8, byteorderbig = True)
+        self.rodataMemoryOffset = bytearray_slice(self.NSORaw, 9, byteorderbig = True)
+        self.rodataDecompSize = bytearray_slice(self.NSORaw, 10, byteorderbig = True)
+        self.ModuleSize = bytearray_slice(self.NSORaw, 11, byteorderbig = True)
+        self.rwdataFileOffset = bytearray_slice(self.NSORaw, 12, byteorderbig = True)
+        self.rwdataMemoryOffset = bytearray_slice(self.NSORaw, 13, byteorderbig = True)
+        self.rwdataDecompSize = bytearray_slice(self.NSORaw, 14, byteorderbig = True)
+        self.bssSize = bytearray_slice(self.NSORaw, 15, byteorderbig = True)
 
         offset = 16 
-        self.ModuleId = ''.join('{:02x}'.format(x) for x in buf[4*offset : 8+4*offset])
+        self.ModuleId = ''.join('{:02x}'.format(x) for x in self.NSORaw[4*offset : 8+4*offset])
         self.textFileEnd = (bytes_to_int(self.textFileOffset) +
                         bytes_to_int(self.textDecompSize)).to_bytes(4, byteorder='big', signed=False)
         
@@ -125,27 +156,52 @@ class MainNSOStruct:
         else:
             self.codeCaveStart = bytearray.fromhex('00000000')
             self.codeCaveEnd = bytearray.fromhex('00000000')
-    
+
+        self.rodataStart = bytes_to_int(self.rodataMemoryOffset)
+        self.rodataEnd = self.rodataStart + bytes_to_int(self.rodataDecompSize)
+        self.rwdataStart = bytes_to_int(self.rwdataMemoryOffset)
+        self.rwdataEnd = self.rwdataStart + bytes_to_int(self.rwdataDecompSize)
+        self.bssStart = get_pages_size(self.rwdataEnd)
+        self.bssEnd = self.bssStart + bytes_to_int(self.bssSize)
+        self.multimediaStart = get_pages_size(self.bssEnd)
+
+        self.bssMemoryOffset = self.bssStart.to_bytes(4, byteorder='big', signed=False)
+
     def get_mainfunc_file(self):
         if self.is_NSO_file():
             self.mainFuncFile = self.NSORaw[bytes_to_int(self.textFileOffset) : bytes_to_int(self.textFileEnd)]
 
+    def get_mainfunc_bits_file(self):
+        self.mainFuncFile_bits = arm_4bytes_to_bits(self.mainFuncFile)
+
+    def get_NSORaw4Mod_file(self):
+        self.NSORaw4Mod = deepcopy(self.NSORaw)
+
     def is_NSO_file(self):
-        buf = bytearray(os.path.getsize(self.file_path))
+        file_size = os.path.getsize(self.file_path)
+        if file_size < 0x100:
+            return False
+        buf = bytearray(4)
         with open(self.file_path, 'rb') as fp:
             fp.readinto(buf)
         self.Magic = bytearray_slice(buf, 0, byteorderbig = False).decode('unicode_escape')
         return self.Magic == 'NSO0'
 
     def is_Compressed(self):
-        buf = bytearray(os.path.getsize(self.file_path))
         with open(self.file_path, 'rb') as fp:
-            fp.readinto(buf)
-        self.Flags = bytearray_slice(buf, 3, byteorderbig = False)
-        return sum(self.Flags) != 0
-    
+            fp.seek(12)
+            flags_byte = fp.read(4)
+            flags = int.from_bytes(flags_byte, byteorder='little')
+        return (flags & 0b111)  # Nso Header from https://github.com/Atmosphere-NX/Atmosphere/blob/35d93a7c4188cda103957aa757fd31f9fe7d18cb/libraries/libstratosphere/include/stratosphere/ldr/ldr_types.hpp#L84
+
     def is_main_addr(self, addr):
         return addr in range(bytes_to_int(self.textFileOffset), bytes_to_int(self.textFileEnd))
+
+    def is_rodata_addr(self, addr):
+        return addr in range(self.rodataStart, self.rodataEnd)
+
+    def is_rwdata_addr(self, addr):
+        return addr in range(self.rwdataStart, self.rwdataEnd)
 
     def has_code_cave(self):
         return (bytes_to_int(self.rodataMemoryOffset) -
@@ -174,6 +230,12 @@ class MainNSOStruct:
                         "rodataFileOffset": self.rodataFileOffset.hex(),
                         "rodataMemoryOffset": self.rodataMemoryOffset.hex(),
                         "rodataDecompSize": self.rodataDecompSize.hex(),
+                        "ModuleSize": self.ModuleSize.hex(),
+                        "rwdataFileOffset": self.rwdataFileOffset.hex(),
+                        "rwdataMemoryOffset": self.rwdataMemoryOffset.hex(),
+                        "rwdataDecompSize": self.rwdataDecompSize.hex(),
+                        "bssMemoryOffset": self.bssMemoryOffset.hex(),
+                        "bssSize": self.bssSize.hex(),
                         "ModuleId": self.ModuleId,
                         "textFileEnd": self.textFileEnd.hex(),
                         "codeCave":code_cave

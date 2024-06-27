@@ -3,7 +3,9 @@ from tkinter import messagebox
 from capstone import *
 from keystone import *
 
-    
+
+generate_msg = lambda x:'\n'.join(eval(x))  # just for static characters
+
 def create_one_msg(msg: str):
     return msg + '\n'
 
@@ -61,6 +63,27 @@ def remove_inner_code_linebreak(code_list: list):
     
     return purified_code_list
 
+def split_cheats_text(msg: str):
+    msg_blocks = []
+    current_block = []
+    lines = msg.split('\n')
+
+    for line in lines:
+        line = line.strip()  # Hints: trim whitespace characters
+        if not line:  # Hints: remove all empty lines
+            continue
+        
+        if re.match(r'^[\[\{]', line):  # Hints: Split the code using the characters '[' and '{'
+            if current_block:
+                msg_blocks.append('\n'.join(current_block))
+                current_block = []
+        current_block.append(line)
+
+    if current_block:
+        msg_blocks.append('\n'.join(current_block))
+    
+    return msg_blocks
+
 def bytes_to_int(bytearray):
     return int.from_bytes(bytearray, byteorder='big', signed=False)
 
@@ -92,7 +115,9 @@ class PseudoStack:
 class CodeStruct:
     def __init__(self, raw_text: str, globalInfo, file_bundle, force_ASM64 = False) -> None:
         self.logger = globalInfo.logger
+        self.msgbox_title_map = globalInfo.msgbox_title_map
         self.msg_map = globalInfo.msg_map
+        self.str_map = globalInfo.str_map
         self.code_pattern = globalInfo.code_pattern
         self.old_main_file = file_bundle[0]
         self.new_main_file = file_bundle[1]
@@ -111,13 +136,14 @@ class CodeStruct:
         pattern_code = re.compile(r'^ *([abcdef\d]{8}) *([abcdef\d]{8})? *([abcdef\d]{8})? *([abcdef\d]{8})? *$', re.I)
         pattern_long_asm_code = re.compile(r'^ *080([abcdef\d])0000 *([abcdef\d]{8}) *([abcdef\d]{8}) *([abcdef\d]{8}) *$', re.I)
 
-        code_list_raw = re.split('\n{2,}', remove_redudent_linebreak(raw_text))
+        code_list_raw = split_cheats_text(raw_text)
         self.code_list = []
         code_text = ''
         is_splited = False
         has_content = False
         has_unknown = False
 
+        self.logger.info(f'======== raw_text ========\n{raw_text}\n==========================')
         for code in code_list_raw:
             code_chunk_list = re.split('\n', code)
             for code_chunk in code_chunk_list:
@@ -155,14 +181,15 @@ class CodeStruct:
         self.code_list = remove_inner_code_linebreak(self.code_list)  # Hints: title/code_part + \n + code_part
 
         if is_splited:
-            messagebox.showinfo(title='Info', message='\n'.join(eval(self.msg_map['Pre-process message'])))
+            self.logger.info(generate_msg(self.msg_map['Pre-process message 0x08']))
+            messagebox.showinfo(title=self.msgbox_title_map['Info'], message='\n'.join(eval(self.msg_map['Pre-process message 0x08'])))
 
         for code in self.code_list:
             code_text += code
 
         return remove_redudent_linebreak(code_text)
 
-    def check_ASM_type(self):  # Hints: ASM Type should be consistent in one single main.elf
+    def check_ASM_type(self):  # Hints: ASM Type 0x04 should be consistent in one single main.elf
         pattern_asm_code = re.compile(r'^ *(040[abcdef\d]0000) *([abcdef\d]{8}) *([abcdef\d]{8}) *$', re.I)  # Hints: main only, no heap
         Disassembler_64 = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
         Disassembler_32 = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
@@ -207,18 +234,23 @@ class CodeStruct:
     def is_neighbor(self, addr_main, addr_extend: int):
         if not isinstance(addr_main, int):
             addr = addr_main[-1]
-        return (abs(addr - addr_extend) == 4)
+        return (addr_extend - addr == 4)
 
     def is_asm_code_mergable(self, asm_dict_main: dict, asm_dict_extend: dict):  # Hints: Branch cannot merge with anything, pure value merge with neighbor asm
         in_same_cave = asm_dict_main['contents']['in_code_cave'] and asm_dict_extend['contents']['in_code_cave']
+        in_same_rodata = asm_dict_main['contents']['rodata_offset'] is not None and asm_dict_extend['contents']['rodata_offset'] is not None
+        in_same_rwdata = asm_dict_main['contents']['rwdata_offset'] is not None and asm_dict_extend['contents']['rwdata_offset'] is not None
+        in_same_bss = asm_dict_main['contents']['bss_offset'] is not None and asm_dict_extend['contents']['bss_offset'] is not None
         in_same_multi = asm_dict_main['contents']['multimedia_offset'] is not None and asm_dict_extend['contents']['multimedia_offset'] is not None
-        in_same_main = (not asm_dict_main['contents']['in_code_cave'] and not asm_dict_extend['contents']['in_code_cave']
-                            and asm_dict_main['contents']['multimedia_offset'] is None and asm_dict_extend['contents']['multimedia_offset'] is None)
+        in_same_main = asm_dict_main['contents']['in_code_text'] and asm_dict_extend['contents']['in_code_text']
         if (self.is_neighbor(asm_dict_main['contents']['addr'], asm_dict_extend['contents']['addr'])
-                and (in_same_main or in_same_cave or in_same_multi)):
-            if not (not asm_dict_main['contents']['is_value'][-1] and asm_dict_main['contents']['detail']['is_branch']):
-                if not (not asm_dict_extend['contents']['is_value'] and asm_dict_extend['contents']['detail']['is_branch']):
-                    return True
+                and (in_same_main or in_same_cave or in_same_rodata or in_same_rwdata or in_same_bss or in_same_multi)):
+            if (asm_dict_main['type'] == 'code_type_asm' and (in_same_main or in_same_cave)):
+                if not (not asm_dict_main['contents']['is_value'][-1] and asm_dict_main['contents']['detail']['is_branch']):
+                    if not (not asm_dict_extend['contents']['is_value'] and asm_dict_extend['contents']['detail']['is_branch']):
+                        return True
+            else:
+                return True
 
         return False
 
@@ -237,7 +269,8 @@ class CodeStruct:
                 return ('new_code', [self.position[0]+1, 0, 0])
 
         if (self.get_code_struct_type_by_pos(self.code_struct, self.position) == code_chunk['type']
-                and code_chunk['type'] != 'code_type_asm'):
+                and code_chunk['type'] != 'code_type_asm'
+                and code_chunk['type'] != 'code_type_0x5X0X0'):
                 return ('merge_chunk', [self.position[0], self.position[1], self.position[2]+1])
             
         if self.is_asm_code_mergable(self.get_code_struct_by_pos(self.code_struct, self.position), code_chunk):
@@ -256,12 +289,14 @@ class CodeStruct:
                             'type': code_chunk['type'],
                             'contents':
                                 {
-                                    'raw': [code_chunk['contents']['raw']]
+                                    'raw': [code_chunk['contents']['raw']],
+                                    'line_num': code_chunk['contents']['line_num']
                                 }
                         }
                     }
                 }
             )
+        
         elif procedure == 'new_chunk':
             self.code_struct[str(new_position[0])].update(
                     {
@@ -270,7 +305,8 @@ class CodeStruct:
                             'type': code_chunk['type'],
                             'contents':
                                 {
-                                    'raw': [code_chunk['contents']['raw']]
+                                    'raw': [code_chunk['contents']['raw']],
+                                    'line_num': code_chunk['contents']['line_num']
                                 }
                         }
                     }
@@ -287,8 +323,8 @@ class CodeStruct:
                             'branch_type': code_branch_detail['branch_type'],
                             'branch_addr': code_branch_detail['branch_addr'],
                             'branch_to_cave': code_branch_detail['branch_to_cave'],
-                            'branch_to_multi': code_branch_detail['branch_to_multi'],
-                            'branch_multi_offset': code_branch_detail['branch_multi_offset'],
+                            'branch_to_other': code_branch_detail['branch_to_other'],
+                            'branch_other_offset': code_branch_detail['branch_other_offset'],
                     } if code_chunk['contents']['detail']['is_branch'] else None
             
             detail = {
@@ -305,11 +341,17 @@ class CodeStruct:
                             'contents':
                                 {
                                     'raw': [code_chunk['contents']['raw']],
+                                    'line_num': code_chunk['contents']['line_num'],
                                     'head': [code_chunk['contents']['head']],
                                     'addr': [code_chunk['contents']['addr']],
                                     'body': [code_chunk['contents']['body']],
                                     'is_value': [code_chunk['contents']['is_value']],
+                                    'in_code_text': code_chunk['contents']['in_code_text'],
                                     'in_code_cave': code_chunk['contents']['in_code_cave'],
+                                    'in_unknown_cave': code_chunk['contents']['in_unknown_cave'],
+                                    'rodata_offset': code_chunk['contents']['rodata_offset'],
+                                    'rwdata_offset': code_chunk['contents']['rwdata_offset'],
+                                    'bss_offset': code_chunk['contents']['bss_offset'],
                                     'multimedia_offset': code_chunk['contents']['multimedia_offset'],
                                     'detail': detail
                                 }
@@ -346,6 +388,43 @@ class CodeStruct:
                 code_chunk['contents']['is_value']
             )
 
+    def process_code_chunk_0x5X0X0(self, code_chunk: dict, procedure: str, new_position: list):
+        if procedure == 'new_chunk':
+            self.code_struct[str(new_position[0])].update(
+                    {
+                        str(new_position[1]):
+                        {
+                            'type': code_chunk['type'],
+                            'contents':
+                                {
+                                    'raw': [code_chunk['contents']['raw']],
+                                    'line_num': code_chunk['contents']['line_num'],
+                                    'head': [code_chunk['contents']['head']],
+                                    'addr': [code_chunk['contents']['addr']],
+                                    'in_code_text': code_chunk['contents']['in_code_text'],
+                                    'in_code_cave': code_chunk['contents']['in_code_cave'],
+                                    'in_unknown_cave': code_chunk['contents']['in_unknown_cave'],
+                                    'rodata_offset': code_chunk['contents']['rodata_offset'],
+                                    'rwdata_offset': code_chunk['contents']['rwdata_offset'],
+                                    'bss_offset': code_chunk['contents']['bss_offset'],
+                                    'multimedia_offset': code_chunk['contents']['multimedia_offset'],
+                                    'detail': None
+                                }
+                        }
+                    }
+            )
+
+        elif procedure == 'merge_chunk':
+            self.get_code_struct_by_pos(self.code_struct, new_position)['contents']['raw'].append(
+                code_chunk['contents']['raw']
+            )
+            self.get_code_struct_by_pos(self.code_struct, new_position)['contents']['head'].append(
+                code_chunk['contents']['head']
+            )
+            self.get_code_struct_by_pos(self.code_struct, new_position)['contents']['addr'].append(
+                code_chunk['contents']['addr']
+            )
+
     def generate_booklet(self, addr_dict: dict):
         addr_booklet = {}
         for key in addr_dict:
@@ -367,6 +446,8 @@ class CodeStruct:
         position = []
         for addr in addr_list:
             if code_num == addr[0]:
+                position.append(addr)
+            elif self.code_struct[str(addr[0])]['0']['type'] == 'master_code_title':
                 position.append(addr)
         return position if position != [] else None
 
@@ -420,7 +501,9 @@ class CodeStruct:
             )
 
     def process_code_chunk(self, code_chunk: dict, procedure: str, new_position: list):    
-        if code_chunk['type'] != 'code_type_asm':
+        if code_chunk['type'] == 'code_type_0x5X0X0':
+            self.process_code_chunk_0x5X0X0(code_chunk, procedure, new_position)
+        elif code_chunk['type'] != 'code_type_asm':
             self.process_code_chunk_lite(code_chunk, procedure, new_position)
         else:
             self.process_code_chunk_asm(code_chunk, procedure, new_position)
@@ -433,6 +516,7 @@ class CodeStruct:
         self.code_struct = {}
         self.addr_dict = {}
         self.position = [0, 0, 0]  # Hints: code_index, chunk_index, offset = 0, 0, 0
+        self.line_num = -2
         is_legal_code_body = False
         force_new_code = False
         self.struct_initialized = False
@@ -464,24 +548,29 @@ class CodeStruct:
 
         is_code_title = pattern_code_title.match(code)  # Warning: ":=" only for python > 3.8
         if is_code_title is not None:
+            self.line_num = self.line_num + 2
             return {
                 'type': 'code_title',
                 'contents':
                     {
-                        'raw': code
+                        'raw': code,
+                        'line_num': self.line_num
                     }
             }
 
         is_master_code_title = pattern_master_code_title.match(code)
         if is_master_code_title is not None:
+            self.line_num = self.line_num + 2
             return {
                 'type': 'master_code_title',
                 'contents':
                     {
-                        'raw': code
+                        'raw': code,
+                        'line_num': self.line_num
                     }
             }
 
+        # Hints: ASM Type 0x04
         pattern_asm_code = re.compile(r'^ *(040[abcdef\d]0000) *([abcdef\d]{8}) *([abcdef\d]{8}) *$', re.I)
         is_pattern_asm_code = pattern_asm_code.match(code)
         if is_pattern_asm_code is not None:
@@ -491,39 +580,73 @@ class CodeStruct:
                 Disassembler = Cs(CS_ARCH_ARM, CS_MODE_LITTLE_ENDIAN)
 
             can_be_disassembled = False
+            in_code_text = False
             in_code_cave = False
+            in_unknown_cave = False  # Hints: rodata cave and rwdata cave
+            rodata_offset = None
+            rwdata_offset = None
+            bss_offset = None
             multimedia_offset = None
             is_branch = False
             code_addr = int(is_pattern_asm_code.group(2), 16)
             code_bytes = bytearray.fromhex(is_pattern_asm_code.group(3))
             code_bytes.reverse()
 
-            if (code_addr >= bytes_to_int(self.old_main_file.codeCaveStart)
-                and code_addr < bytes_to_int(self.old_main_file.codeCaveEnd)):
+            if (code_addr < bytes_to_int(self.old_main_file.codeCaveStart)):
+                in_code_text = True
+            elif (code_addr >= bytes_to_int(self.old_main_file.codeCaveStart) and code_addr < bytes_to_int(self.old_main_file.codeCaveEnd)):
                 in_code_cave = True
-            if code_addr >= bytes_to_int(self.old_main_file.rodataMemoryOffset):
-                multimedia_offset = code_addr - bytes_to_int(self.old_main_file.rodataMemoryOffset)
+            elif (code_addr >= self.old_main_file.rodataStart and code_addr < self.old_main_file.rodataEnd):
+                rodata_offset = code_addr - self.old_main_file.rodataStart
+            elif (code_addr >= self.old_main_file.rwdataStart and code_addr < self.old_main_file.rwdataEnd):
+                rwdata_offset = code_addr - self.old_main_file.rwdataStart
+            elif (code_addr >= self.old_main_file.bssStart and code_addr < self.old_main_file.bssEnd):
+                bss_offset = code_addr - self.old_main_file.bssStart
+            elif code_addr >= self.old_main_file.multimediaStart:
+                multimedia_offset = code_addr - self.old_main_file.multimediaStart
+            elif code_addr > self.old_main_file.rodataStart:  # Hints: rodata cave and rwdata cave
+                in_unknown_cave = True
+
             for i in Disassembler.disasm(code_bytes, code_addr):
                 can_be_disassembled = True
 
-                if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic) or (i.mnemonic == 'adr' and '#' in i.op_str):
+                if (i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic) or (i.mnemonic == 'adr' and '#' in i.op_str)
+                    or i.mnemonic == 'cbz' or i.mnemonic == 'cbnz'
+                    or i.mnemonic == 'tbz' or i.mnemonic == 'tbnz'):
                     is_branch = True
                     branch_to_cave = False
-                    branch_to_multi = False
-                    branch_multi_offset = None
+                    branch_to_other = None
+                    branch_other_offset = None
                     branch_type = i.mnemonic
                     if branch_type == 'adr' and '#' in i.op_str:  # Hints: Add extra branch type here
                         [extra_op, branch_addr] = i.op_str.split('#')
                         branch_addr = int(branch_addr, 16)
                         branch_type += ' ' + extra_op
+                    elif i.mnemonic == 'cbz' or i.mnemonic == 'cbnz' or i.mnemonic == 'tbz' or i.mnemonic == 'tbnz':
+                        left_part, separator, right_part = i.op_str.rpartition('#')
+                        branch_addr = int(right_part, 16)
+                        branch_type += ' ' + left_part
                     else:
                         branch_addr = int(i.op_str[1:], 16)
                     if (branch_addr >= bytes_to_int(self.old_main_file.codeCaveStart)
                             and branch_addr < bytes_to_int(self.old_main_file.codeCaveEnd)):
                         branch_to_cave = True
-                    if branch_addr >= bytes_to_int(self.old_main_file.rodataMemoryOffset):
-                        branch_to_multi = True
-                        branch_multi_offset = branch_addr - bytes_to_int(self.old_main_file.textMemoryOffset)
+                    if branch_addr >= self.old_main_file.rodataStart:
+                        if branch_addr < self.old_main_file.rodataEnd:
+                            branch_to_other = '[.Rodata]'
+                            branch_other_offset = branch_addr - self.old_main_file.rodataStart
+                        elif branch_addr < self.old_main_file.rwdataEnd:
+                            branch_to_other = '[.Rwdata]'
+                            branch_other_offset = branch_addr - self.old_main_file.rwdataStart
+                        elif branch_addr < self.old_main_file.bssEnd:
+                            branch_to_other = '[.Bss]'
+                            branch_other_offset = branch_addr - self.old_main_file.bssStart
+                        elif branch_addr >= self.old_main_file.multimediaStart:
+                            branch_to_other = '[.Multimedia]'
+                            branch_other_offset = branch_addr - self.old_main_file.multimediaStart
+                        elif branch_addr > self.old_main_file.rodataStart:  # Hints: rodata cave and rwdata cave
+                            branch_to_other = '[.UnknownCave]'
+                            branch_other_offset = branch_addr - self.old_main_file.rodataStart
                     
                 asm_code_disam = ("0X%s:\t%s\t%s" %(hex(i.address)[2:].upper(), i.mnemonic.upper(), i.op_str.upper()))
                 asm_code_disam = asm_code_disam.replace('0X', '0x')
@@ -532,45 +655,106 @@ class CodeStruct:
                                     'branch_type': branch_type,
                                     'branch_addr': branch_addr,
                                     'branch_to_cave': branch_to_cave,
-                                    'branch_to_multi': branch_to_multi,
-                                    'branch_multi_offset': branch_multi_offset,
+                                    'branch_to_other': branch_to_other,
+                                    'branch_other_offset': branch_other_offset,
                             } if is_branch else None
             detail = {
                                     'disam': asm_code_disam,
                                     'is_branch': is_branch,
                                     'branch_detail': branch_detail
                         } if can_be_disassembled else None
+
+            self.line_num = self.line_num + 1
             return {
                 'type': 'code_type_asm',
                 'contents':
                     {
                         'raw': code,
+                        'line_num': self.line_num,
                         'head': is_pattern_asm_code.group(1),
                         'addr': code_addr,
                         'body': is_pattern_asm_code.group(3),
                         'is_value': not can_be_disassembled,  # Hints: assuming type 0x0[12]xxxxxx need alignment and not an asm value
+                        'in_code_text': in_code_text,
                         'in_code_cave': in_code_cave,
+                        'in_unknown_cave': in_unknown_cave,
+                        'rodata_offset': rodata_offset,
+                        'rwdata_offset': rwdata_offset,
+                        'bss_offset': bss_offset,
                         'multimedia_offset': multimedia_offset,
                         'detail': detail
                     }
             }
 
+        # Hints: code_type_0x5X0X0 Load From Fixed Address Encoding
+        pattern_load_maddr_code = re.compile(r'^ *(5[1248]0[abcdef\d]0{4}) *([abcdef\d]{8}) *$', re.I)
+        is_pattern_load_maddr_code = pattern_load_maddr_code.match(code)
+        if is_pattern_load_maddr_code is not None:
+            in_code_text = False
+            in_code_cave = False
+            in_unknown_cave = False  # Hints: rodata cave and rwdata cave
+            rodata_offset = None
+            rwdata_offset = None
+            bss_offset = None
+            multimedia_offset = None
+            code_addr = int(is_pattern_load_maddr_code.group(2), 16)
+
+            if (code_addr < bytes_to_int(self.old_main_file.codeCaveStart)):
+                in_code_text = True
+            elif (code_addr >= bytes_to_int(self.old_main_file.codeCaveStart) and code_addr < bytes_to_int(self.old_main_file.codeCaveEnd)):
+                in_code_cave = True
+            elif (code_addr >= self.old_main_file.rodataStart and code_addr < self.old_main_file.rodataEnd):
+                rodata_offset = code_addr - self.old_main_file.rodataStart
+            elif (code_addr >= self.old_main_file.rwdataStart and code_addr < self.old_main_file.rwdataEnd):
+                rwdata_offset = code_addr - self.old_main_file.rwdataStart
+            elif (code_addr >= self.old_main_file.bssStart and code_addr < self.old_main_file.bssEnd):
+                bss_offset = code_addr - self.old_main_file.bssStart
+            elif code_addr >= self.old_main_file.multimediaStart:
+                multimedia_offset = code_addr - self.old_main_file.multimediaStart
+            elif code_addr > self.old_main_file.rodataStart:  # Hints: rodata cave and rwdata cave
+                in_unknown_cave = True
+
+            self.line_num = self.line_num + 1
+            return {
+                'type': 'code_type_0x5X0X0',
+                'contents':
+                    {
+                        'raw': code,
+                        'line_num': self.line_num,
+                        'head': is_pattern_load_maddr_code.group(1),
+                        'addr': code_addr,
+                        'in_code_text': in_code_text,
+                        'in_code_cave': in_code_cave,
+                        'in_unknown_cave': in_unknown_cave,
+                        'rodata_offset': rodata_offset,
+                        'rwdata_offset': rwdata_offset,
+                        'bss_offset': bss_offset,
+                        'multimedia_offset': multimedia_offset,
+                        'detail': None
+                    }
+            }
+
+        # Hints: code_type_XXX
         for key in self.code_pattern:
             pattern = re.compile(eval(self.code_pattern[key]["pattern"]), re.I)
             if pattern.match(code) is not None:
+                self.line_num = self.line_num + 1
                 return {
                     'type': key,
                     'contents':
                         {
-                            'raw': code
+                            'raw': code,
+                            'line_num': self.line_num
                         }
                 }
 
-        return  {
+        self.line_num = self.line_num + 1
+        return {
             'type': 'code_type_unknown',
             'contents':
                 {
-                    'raw': code
+                    'raw': code,
+                    'line_num': self.line_num
                 }
         }
 
