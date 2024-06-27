@@ -4,4 +4,3 @@ pyinstaller>=4.5.1
 nsz>=4.2.1
 cryptography~=41.0.1
 chardet==5.2.0
-lz4>=4.0.2
