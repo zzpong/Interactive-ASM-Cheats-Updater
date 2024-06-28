@@ -1115,6 +1115,9 @@ class CodeUpdaterInterface:
         main_file_bundle = [self.old_main_file.mainFuncFile, self.new_main_file.mainFuncFile]
 
         [hit_start_addr, wing_length, real_addr_offset] = find_feature_addr(main_file_bundle, addr_range, wing_length, self.code.ASM_type)
+        if len(hit_start_addr) >= 20:
+            messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['To many results'])))
+            hit_start_addr = hit_start_addr[0:19]
         self.wing_text_update(str(wing_length), code_type)
         
         if len(hit_start_addr) == 0:

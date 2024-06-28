@@ -1,7 +1,41 @@
 import re
 from copy import deepcopy
+import time
+import tkinter
 from capstone import *
 from keystone import *
+
+class Progress_Bar:
+	def __init__(self, bytes_file_size):
+		self.root = tkinter.Tk()
+		self.root.geometry('800x30')
+		self.root.title('Locating addresses ...')
+		self.left_text = tkinter.Label(self.root, text='Searching  0%')
+		self.left_text.pack(expand='yes', fill='both', anchor='w', side='left', padx=5, pady=5)
+		self.progressbarOne = tkinter.ttk.Progressbar(self.root, length=400)
+		self.progressbarOne.pack(expand='yes', fill='both', side='left', padx=5, pady=5)
+		self.right_text = tkinter.Label(self.root, text=f'0/{bytes_file_size} [00:00<00:00]')
+		self.right_text.pack(expand='yes', fill='both', anchor='w', side='right', padx=5, pady=5)
+		self.progressbarOne['value'] = 0
+		self.progressbarOne['maximum'] = bytes_file_size
+		self.bytes_file_size = bytes_file_size
+		self.timer_start = time.time()
+		self.timer_stop = self.timer_start
+
+	def update(self, current_address):
+		self.timer_stop = time.time()
+		elapsed_time = self.timer_stop - self.timer_start
+		if elapsed_time != 0:
+			process_speed = current_address/elapsed_time
+			if process_speed != 0:
+				eta_time = self.bytes_file_size/process_speed
+				self.left_text.config(text=f'Locating  {current_address*100//self.bytes_file_size}%')
+				self.progressbarOne['value'] = current_address
+				self.right_text.config(text=f'{current_address}/{self.bytes_file_size} [{time.strftime("%M:%S", time.localtime(elapsed_time))}<{time.strftime("%M:%S", time.localtime(eta_time))}]')
+				self.root.update()
+	
+	def destroy(self):
+		self.root.destroy()
 
 
 def bytesarray_escape(bytes_array) -> bytearray:
@@ -24,7 +58,12 @@ def bytesarray_findall(bytes_file, bytes_feature) -> list:
     hit_addr = []
     sliced_addr = 0
     bytes_file_len = len(bytes_file)
+    need_progress_bar = (bytes_file_len > 100000)
+    if need_progress_bar:
+        progress_bar = Progress_Bar(bytes_file_len)
     while True:
+        if need_progress_bar:
+            progress_bar.update(sliced_addr)
         result = re.search(bytes_feature, bytes_file, re.DOTALL)
         if result is None:
             break
@@ -33,6 +72,8 @@ def bytesarray_findall(bytes_file, bytes_feature) -> list:
             break
         bytes_file = bytes_file[(result.span()[1]):]
         sliced_addr += result.span()[1]
+    if need_progress_bar:
+        progress_bar.destroy()
     return hit_addr
 
 def bytes_padding(asm_binarray, start_address) -> dict:
@@ -128,7 +169,8 @@ def get_bytes_feature(bytes_file, address, wing_length, asm_type = 'ARM64'):
             for i in Disassembler.disasm(padding_dict[str(index)]['bytearray'], padding_dict[str(index)]['start_address']):
                 byte_cache = bytearray(0)
                 if asm_type == 'ARM64':
-                    if i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic):
+                    if (i.mnemonic == 'bl' or i.mnemonic == 'b' or ('b.' in i.mnemonic)
+                            or i.mnemonic == 'cbz' or i.mnemonic == 'cbnz' or i.mnemonic == 'tbz' or i.mnemonic == 'tbnz'):
                         byte_cache = bytearray(b'(.{3})')
                         try:
                             byte_cache += bytesarray_escape(i.bytes[3])
@@ -264,6 +306,8 @@ def find_feature_addr(main_file_bundle, addr_range, wing_length, asm_type = 'ARM
     hit_start_addr = bytesarray_findall(new_main_file, bytes_feature)
     hit_end_addr = list(map(lambda x:x+feature_size, hit_start_addr))
 
+    # return [hit_start_addr, wing_length, real_addr_offset]  # Hints: For progress bar test only, or try "Regenerate" button with wing_length set to 0 directly
+
     if len(hit_start_addr) != 0:  # Hints: refine wing_length
         real_addr_offset -= wing_length[0] * 4
         [hit_start_addr, wing_length] = find_single_feature_addr(main_file_bundle, bytes_feature_hex, feature_loc, hit_start_addr, hit_end_addr, wing_length, asm_type)
@@ -329,10 +373,18 @@ def generate_ASM_code(bytes_file, addr_range, asm_type = 'ARM64'):
                 msg.append("0x%s:\t%s" %((hex(_start_addr)[2:]).zfill(8).upper(), 'Zero Padding'))
                 _start_addr += 4
         else:
-            for i in Disassembler.disasm(padding_dict[str(index)]['bytearray'], padding_dict[str(index)]['start_address']):
-                asm_code_disam = ("0X%s:\t%s\t%s" %((hex(i.address)[2:]).zfill(8).upper(), i.mnemonic.upper(), i.op_str.upper()))
-                asm_code_disam = asm_code_disam.replace('0X', '0x')
-                msg.append(asm_code_disam)
+            code_chunk_len = len(padding_dict[str(index)]['bytearray'])
+            address_pool = range(padding_dict[str(index)]['start_address'], padding_dict[str(index)]['start_address']+code_chunk_len, 4)
+            address_num = code_chunk_len // 4
+            for i in range(address_num):
+                is_unknown = True
+                for asm_content in Disassembler.disasm(padding_dict[str(index)]['bytearray'][4*i: 4*i+4], address_pool[i]):
+                    asm_code_disam = ("0X%s:\t%s\t%s" %((hex(asm_content.address)[2:]).zfill(8).upper(), asm_content.mnemonic.upper(), asm_content.op_str.upper()))
+                    asm_code_disam = asm_code_disam.replace('0X', '0x')
+                    msg.append(asm_code_disam)
+                    is_unknown = False
+                if is_unknown:
+                    msg.append("0x%s:\t%s" %((hex(address_pool[i])[2:]).zfill(8).upper(), 'Unknown'))
 
     return msg
 

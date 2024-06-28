@@ -1,7 +1,6 @@
 # NSZ implementation by nicoboss
 # Link: https://github.com/nicoboss/nsz
 # Add NCZ decompression UI, powered by tkinter
-
 from pathlib import Path
 from traceback import format_exc
 from hashlib import sha256
@@ -10,7 +9,6 @@ from zstandard import ZstdDecompressor
 from nsz.Fs import factory, Type, Pfs0, Hfs0, Nca, Xci
 from nsz.PathTools import *
 from nsz import Header, BlockDecompressorReader, FileExistingChecks
-import enlighten
 
 import time
 import tkinter
@@ -276,4 +274,3 @@ def __decompressXcz(filePath, outputDir, write, raiseVerificationException, stat
 		__decompressContainer(secureIn, None, fileHashes, write, raiseVerificationException, statusReportInfo, pleaseNoPrint)
 
 	container.close()
-

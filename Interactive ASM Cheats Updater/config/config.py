@@ -98,7 +98,7 @@ code_pattern = {
             "generate_type": 'flat_generate',
             "description": 'Code Type 0xC0: Begin Register Conditional Block',
             "details":
-                """[f'Code type 0xC0 performs a comparison of the contents of a register and another value.'
+                """[f'Code type 0xC0 performs a comparison of the contents of a register and another value.',
                     'If the condition is not met, all instructions until the appropriate conditional block terminator are skipped.']"""
         },
         "code_type_0xC1":
@@ -131,7 +131,7 @@ code_pattern = {
             "generate_type": 'flat_generate',
             "description": 'Code Type 0xF0: Double Extended-Width Instruction',
             "details":
-                """[f'Code type 0xF0 signals to the VM to treat the upper three nybbles of the first dword as instruction type, instead of just the upper nybble.'
+                """[f'Code type 0xF0 signals to the VM to treat the upper three nybbles of the first dword as instruction type, instead of just the upper nybble.',
                     'This reserves an additional 16 opcodes for future use.']"""
         },
         "code_type_0xFF0":
@@ -266,7 +266,7 @@ code_pattern = {
             "generate_type": 'flat_generate',
             "description": 'Code Type 0xC0: 寄存器条件循环标志',
             "details":
-                """[f'Code type 0xC0 将寄存器数据与其他数据相比较。'
+                """[f'Code type 0xC0 将寄存器数据与其他数据相比较。',
                     '如条件不满足，则跳过之后循环体，不进入循环。']"""
         },
         "code_type_0xC1":
@@ -299,7 +299,7 @@ code_pattern = {
             "generate_type": 'flat_generate',
             "description": 'Code Type 0xF0: 双字拓展指令',
             "details":
-                """[f'Code type 0xF0 告知虚拟系统将本金手指除F0标志位以外的前三个半字节作为ASM指令类型而非金手指指令进行处理。'
+                """[f'Code type 0xF0 告知虚拟系统将本金手指除F0标志位以外的前三个半字节作为ASM指令类型而非金手指指令进行处理。',
                     '该功能为未来16位操作指令集的预留功能。']"""
         },
         "code_type_0xFF0":
@@ -340,7 +340,7 @@ code_pattern = {
 localization = {
     "loc_EN":
         {
-            "title": "Code Updater for Nintendo Switch ver 1.1.0",
+            "title": "Code Updater for Nintendo Switch ver 1.1.1",
             "wing_length_default": "[1, 1]",
             "extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -406,6 +406,7 @@ localization = {
 
                 "Wing length check message": """['Wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
                 "Extra wing length check message": """['Extra wing length must be int or list, eg. "20", "[15,10]". Setting to default value.']""",
+                "To many results": """['Too many results, address number will be limited to 20.']""",
 
                 "code_title": """['This is code title.']""",
                 "master_code_title": """['This is master code title.']""",
@@ -431,7 +432,7 @@ localization = {
         },
  "loc_CN":
          {
-            "title": "金手指自动更新器 ver 1.1.0c",
+            "title": "金手指自动更新器 ver 1.1.1c",
             "wing_length_default": "[1, 1]",
             "extra_wing_length_default": "[2, 2]",
             "hints_map":
@@ -497,6 +498,7 @@ localization = {
 
                 "Wing length check message": """['翼展宽度必须为整数，如："20"，"[15,10]"']""",
                 "Extra wing length check message": """['额外翼展宽度必须为整数，如："20"，"[15,10]"']""",
+                "To many results": """['定位结果过多，将缩减地址数至20']""",
 
                 "code_title": """['这是普通码标题。']""",
                 "master_code_title": """['这是大师码标题。']""",
