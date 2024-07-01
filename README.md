@@ -14,7 +14,6 @@ Unlocks your ability of updating ASM codes for Nintendo Switch.
   	- [Usage](#usage)
 - [Building from Source](#building-from-source)
     - [Pre-Requisites For Build](#pre-requisites-for-build)
-  	- [Hints For Pre-Requisites](#hints-for-pre-requisites)
   	- [Usage For Build](#usage-for-build)
 - [Trouble Shooting](#trouble-shooting)
 - [Contribution](#contribution)
@@ -59,13 +58,10 @@ Visit out [releases](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/re
 
 ### Usage
 
-#### Dump main file from xci/nsp/nsz game/updates (required only if version < 0.5.0)
-There are lots of excellent works for you to dump the main file, like [hactool](https://github.com/SciresM/hactool), [NSC_Builder](https://github.com/julesontheroad/NSC_BUILDER), [DBI](https://github.com/rashevskyv/dbi) or [nxdumptool](https://github.com/DarkMatterCore/nxdumptool). Please choose anyone you familiar with to dump two main files:
+#### Load main file or gamepackages, and then copy your cheat codes to "Input Old Codes"
+Build ID of the old main file will be shown after loading. Please make sure it is the same with the old codes file name.
 * **Old Main File**: dump from the game which old cheat runs on
 * **New main File**: dump from the game which you want to update the old cheat to
-
-#### Load main file and copy cheat codes (or load the gamepackages (super ones excluded) directly if version > 0.5.0)
-Build ID of the old main file will be shown after loading. Please make sure it is the same with the old cheat.
 
 ** Please unpack game packages and load main files manually if automatic dumping process failed to work.
 
@@ -92,14 +88,9 @@ Logs window has everything you need when updating cheat codes.
 ## Building from Source
 
 ### Pre-Requisites For Build
-* Python 3.9
+* Python 3.8+
 * Packages in requirements.txt
-* [upx](https://github.com/upx/upx) (optional)
-* Spec file for pyinstaller (refer [here](https://pyinstaller.org/en/stable/spec-files.html) for more info)
-
-### Hints For Pre-Requisites
-* Choose any python version lower than 3.9 will unleash the support of Windows 7, but not tested. Please use at your own risk.
-* There is a main.spec template in project root directory, please change demanded parameters before use.
+* [upx](https://github.com/upx/upx)
 
 ### Usage For Build
 
@@ -110,13 +101,13 @@ Logs window has everything you need when updating cheat codes.
 
 #### Use any command shell you familar with to install support packages
     cd your_source_code_root_dir
-    py -3.9 -m pip install -r requirements.txt
+    py -3.8 -m pip install -r requirements.txt
 
 #### Run the project
-    py -3.9 NSCodeUpdater.py
+    py -3.8 __main__.py
     
-#### OR build the project (noupx)
-    pyinstaller -F NSCodeUpdater.py --clean --noupx --collect-binaries capstone --collect-binaries keystone -w -n NSCodeUpdater_en -i xcw.ico
+#### OR build the project
+    pyinstaller -F -w -i xcw.ico __main__.py --upx-dir your_upx_root_dir
 
 
 ## Trouble Shooting
