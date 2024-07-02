@@ -141,10 +141,16 @@ Logs window has everything you need when updating cheat codes.
 
     A: In most cases, the "master code" which has a title within "{}" takes the responsibility. Some code creater prefer use them as "default function that should run with the game start". These codes and some non "master code" titled like "recovery code" always have links with other ASM codes like "BL #0xADDR". Please add these code contents to other parts of the cheat codes that don't work properly and run the program again.
 
+
 ## Contributing
 
 Feel free to dive in! [Open an issue](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/issues/new) or [submit PRs](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/pulls).
 
+Thank you for your contribution:
+
+<a href="https://github.com/zzpong/Interactive-ASM-Cheats-Updater/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=zzpong/Interactive-ASM-Cheats-Updater" />
+</a>
 
 ## Credits
 
@@ -167,7 +173,6 @@ e.) python AES128 implementation: written by SciresM.
 All cheat makers that sparing no effort in creating and updating cheat codes, you ARE the true heros!
 
 All the helpers for bringing this project to life!
-
 
 ## License
 
