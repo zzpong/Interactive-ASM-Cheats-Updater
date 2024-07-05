@@ -788,6 +788,14 @@ class CodeUpdaterInterface:
         self.btn_savnso.config(state=DISABLED)
         self.btn_regenerate.config(state=DISABLED)
 
+    def btn_before_searching(self):
+        self.btn_generate.config(state=DISABLED)
+        self.btn_skip.config(state=DISABLED)
+
+    def btn_after_searching(self):
+        self.btn_generate.config(state=NORMAL)
+        self.btn_skip.config(state=NORMAL)
+
     def btn_after_1st_generate(self):
         self.btn_load_old_file.config(state=DISABLED)
         self.btn_load_new_file.config(state=DISABLED)
@@ -1114,7 +1122,9 @@ class CodeUpdaterInterface:
 
         main_file_bundle = [self.old_main_file.mainFuncFile, self.new_main_file.mainFuncFile]
 
+        self.btn_before_searching()
         [hit_start_addr, wing_length, real_addr_offset] = find_feature_addr(main_file_bundle, addr_range, wing_length, self.code.ASM_type)
+        self.btn_after_searching()
         if len(hit_start_addr) >= 20:
             messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['To many results'])))
             hit_start_addr = hit_start_addr[0:19]
@@ -1374,6 +1384,8 @@ class CodeUpdaterInterface:
         self.analysis_code(self.cur_position)
     
     def undo(self):
+        self.btn_after_searching()  # Hints: Recover button status after force break while searching
+
         if not self.check_previous_step():
             self.restart()
             return

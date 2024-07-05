@@ -22,6 +22,11 @@ def remove_redudent_post_linebreak(msg: str):
         msg = msg[:-1]
     return msg
 
+def split_raw_code(msg: str):
+    msg = re.sub('\n{1,}', '\n', msg)
+    padded_msg = [''] + re.split(r'\n(\[|\{)', msg)  # Warning: Not r'\n(\[)|\n(\{))'
+    return [content[0]+content[1] for content in zip(padded_msg[0::2], padded_msg[1::2])]
+
 def is_code(msg: str):
     try:
         code = re.split(' ', msg)
@@ -111,7 +116,7 @@ class CodeStruct:
         pattern_code = re.compile(r'^ *([abcdef\d]{8}) *([abcdef\d]{8})? *([abcdef\d]{8})? *([abcdef\d]{8})? *$', re.I)
         pattern_long_asm_code = re.compile(r'^ *080([abcdef\d])0000 *([abcdef\d]{8}) *([abcdef\d]{8}) *([abcdef\d]{8}) *$', re.I)
 
-        code_list_raw = re.split('\n{2,}', remove_redudent_linebreak(raw_text))
+        code_list_raw = split_raw_code(remove_redudent_linebreak(raw_text))
         self.code_list = []
         code_text = ''
         is_splited = False
