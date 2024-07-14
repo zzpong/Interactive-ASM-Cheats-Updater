@@ -519,9 +519,13 @@ class CodeStruct:
                     branch_multi_offset = None
                     branch_type = i.mnemonic
                     if ((branch_type == 'adr' and '#' in i.op_str) 
-                            or branch_type == 'cbz' or branch_type == 'cbnz' or branch_type == 'tbz' or branch_type == 'tbnz'):  # Hints: Add extra branch type here
+                            or branch_type == 'cbz' or branch_type == 'cbnz'):  # Hints: Add extra branch type here
                         [extra_op, branch_addr] = i.op_str.split('#')
                         branch_addr = int(branch_addr, 16)
+                        branch_type += ' ' + extra_op
+                    elif branch_type == 'tbz' or branch_type == 'tbnz':
+                        [extra_op, branch_addr] = i.op_str.split('#0x')
+                        branch_addr = int('0x'+branch_addr, 16)
                         branch_type += ' ' + extra_op
                     else:
                         branch_addr = int(i.op_str[1:], 16)

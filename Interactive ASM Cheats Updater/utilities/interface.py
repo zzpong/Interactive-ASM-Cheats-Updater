@@ -247,6 +247,8 @@ class CodeUpdaterInterface:
         self.msg_map = globalInfo.msg_map
         self.wing_length_default = globalInfo.wing_length_default
         self.extra_wing_length_default = globalInfo.extra_wing_length_default
+        self.max_shown_address = globalInfo.max_shown_address
+
         self.supported_package_type = globalInfo.supported_package_type
         self.code_pattern = globalInfo.code_pattern
 
@@ -1125,7 +1127,7 @@ class CodeUpdaterInterface:
         self.btn_before_searching()
         [hit_start_addr, wing_length, real_addr_offset] = find_feature_addr(main_file_bundle, addr_range, wing_length, self.code.ASM_type)
         self.btn_after_searching()
-        if len(hit_start_addr) >= 20:
+        if len(hit_start_addr) >= int(self.max_shown_address):
             messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['To many results'])))
             hit_start_addr = hit_start_addr[0:19]
         self.wing_text_update(str(wing_length), code_type)
@@ -1384,7 +1386,7 @@ class CodeUpdaterInterface:
         self.analysis_code(self.cur_position)
     
     def undo(self):
-        self.btn_after_searching()  # Hints: Recover button status after force break while searching
+        self.btn_after_searching()  # Hints: Recover button status after force break when searching
 
         if not self.check_previous_step():
             self.restart()
