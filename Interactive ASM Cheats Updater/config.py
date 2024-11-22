@@ -340,7 +340,7 @@ code_pattern = {
 localization = {
     "loc_EN":
         {
-            "title": "Code Updater for Nintendo Switch ver 1.1.2",
+            "title": "Code Updater for Nintendo Switch ver 1.1.3",
             "hints_map":
             {
                 "Old Main File:": "Old Main File:",
@@ -360,7 +360,7 @@ localization = {
                 "Old Assembly Codes:": "Old Assembly Codes:",
                 "New Assembly Codes:": "New Assembly Codes:",
                 "Extra Wing Length:": "Extra Length:",
-                "Branch": "Switch to Branch"
+                "Branch": "View Branch Target"
             },
             "btn_map":
             {
@@ -430,7 +430,7 @@ localization = {
         },
  "loc_CN":
          {
-            "title": "金手指自动更新器 ver 1.1.2c",
+            "title": "金手指自动更新器 ver 1.1.3c",
             "hints_map":
             {
                 "Old Main File:": "金手指对应Main：",
@@ -450,7 +450,7 @@ localization = {
                 "Old Assembly Codes:": "旧版ASM源码：",
                 "New Assembly Codes:": "新版ASM源码：",
                 "Extra Wing Length:": "额外翼展宽度：",
-                "Branch": "切换至跳转目标代码"
+                "Branch": "显示跳转目标代码"
             },
             "btn_map":
             {
