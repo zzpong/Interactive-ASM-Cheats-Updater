@@ -104,6 +104,9 @@ class MidASMDataContainer():
 
         self.branch_addr_size = 0 if branch_addr_list is None else len(branch_addr_list)
         self.branch_target_size = 0 if branch_target_list is None else len(branch_target_list)
+        if (self.branch_addr_size == 0
+            or (self.branch_addr_size == 1 and self.branch_target_size > 1)):
+            self.is_view_target = True
 
     def flush(self):
         self.is_updated = False
@@ -760,12 +763,10 @@ class CodeUpdaterInterface:
         self.btn_next_addr.config(state=NORMAL)
         self.branch_checkbox.config(state=NORMAL)
 
-        if midASMDataContainer.branch_target_size == 0:
-            self.branch_checkbox.config(state=DISABLED)
-
-        if midASMDataContainer.branch_addr_size == 0:
-            midASMDataContainer.target_on()
+        if midASMDataContainer.is_view_target:
             self.is_check_branch.set(True)
+
+        if midASMDataContainer.branch_addr_size == 0 or midASMDataContainer.branch_target_size == 0:
             self.branch_checkbox.config(state=DISABLED)
 
         if ((midASMDataContainer.is_view_target and midASMDataContainer.branch_target_size == 1)
