@@ -340,7 +340,7 @@ code_pattern = {
 localization = {
     "loc_EN":
         {
-            "title": "Code Updater for Nintendo Switch ver 1.1.3",
+            "title": "Code Updater for Nintendo Switch ver 1.1.4",
             "hints_map":
             {
                 "Old Main File:": "Old Main File:",
@@ -430,7 +430,7 @@ localization = {
         },
  "loc_CN":
          {
-            "title": "金手指自动更新器 ver 1.1.3c",
+            "title": "金手指自动更新器 ver 1.1.4c",
             "hints_map":
             {
                 "Old Main File:": "金手指对应Main：",
