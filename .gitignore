@@ -1,0 +1,11 @@
+.venv*/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+*.patch
+log/
+back_up/
+prod.keys
+keys.txt

@@ -1,0 +1,29 @@
+name: Compatibility tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+      - name: Install dependencies
+        run: python -m pip install -r "Interactive ASM Cheats Updater/requirements.txt" -r requirements-dev.txt
+      - name: Check dependencies
+        run: python -m pip check
+      - name: Run synthetic regression tests
+        run: python -m unittest discover -s tests -v

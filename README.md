@@ -1,8 +1,14 @@
 # Code Updater for Nintendo Switch
 
-![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.8+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
+![DeviceTag](https://img.shields.io/badge/device-switch-red.svg)  ![LanguageTag](https://img.shields.io/badge/language-python3.9+-blue.svg) [![BuildTag](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/releases/tag/latest)  ![LicenseTag](https://img.shields.io/badge/license-GPL_3.0-orange.svg)
 
 Unlocks your ability of updating ASM codes for Nintendo Switch.
+
+This fork provides unofficial compatibility fixes contributed by Eiffel2018.
+The original project is by [zzpong](https://github.com/zzpong/Interactive-ASM-Cheats-Updater);
+all copyright and ownership of the original project remain with zzpong.
+Existing GPL-3.0 and third-party license notices are retained. The application
+keeps its upstream v1.1.4 version number; this is not an official zzpong release.
 
 ![image](https://github.com/zzpong/Interactive-ASM-Cheats-Updater/blob/Active-Branch/program_capture.png)
 
@@ -50,7 +56,7 @@ If you need a Chinese version introduction, please refer [here](https://www.91tv
 ### Pre-Requisites
 
 * Windows 10 (:heavy_check_mark:), Windows 7 (:x:), Mac/Linux (❓: rebuild required (thx to [Amuyea](https://gbatemp.net/members/amuyea.437000/)))
-* No python environment required
+* Packaged upstream releases require no Python installation. Running this fork from source requires Python; see [Building from Source](#building-from-source).
 
 ### Downloading
 
@@ -88,26 +94,71 @@ Logs window has everything you need when updating cheat codes.
 ## Building from Source
 
 ### Pre-Requisites For Build
-* Python 3.8+
-* Packages in requirements.txt
-* [upx](https://github.com/upx/upx)
+
+* 64-bit Python; Python 3.9 and 3.12 are covered by the compatibility tests.
+* Dependencies listed in `Interactive ASM Cheats Updater/requirements.txt`.
+* PyInstaller is only needed when building an EXE; it is included in requirements.
 
 ### Usage For Build
 
-#### Install Python and upx
-* Don't forget to add environment variables.
+#### Install and run globally on Windows (without .venv)
 
-#### Download source code
+1. Install Python with **Add Python to PATH** enabled, then open a new Command Prompt.
+2. Download and extract this fork's source ZIP, or clone the fork. Enter the
+   **Interactive ASM Cheats Updater** folder containing `__main__.py` and
+   `requirements.txt`. In File Explorer's address bar, type `cmd` and press Enter.
+3. Run `python --version`. If that command does not work, try `python3 --version`
+   or `py --version`. Use one working interpreter command consistently for every
+   install, check, and launch command below. These examples use `python`.
+4. Install and check the dependencies in that same Python installation:
 
-#### Use any command shell you familar with to install support packages
-    cd your_source_code_root_dir
-    py -3.8 -m pip install -r requirements.txt
+   ```bat
+   python -m pip install --upgrade pip
+   python -m pip install --upgrade -r requirements.txt
+   python -m pip check
+   python -c "import capstone, keystone, nsz, cryptography, chardet, zbic; print('Dependencies OK')"
+   ```
 
-#### Run the project
-    py -3.8 __main__.py
-    
-#### OR build the project
-    pyinstaller -F -w -i xcw.ico __main__.py --upx-dir your_upx_root_dir
+   The checks should report `No broken requirements found` and `Dependencies OK`.
+   If you chose `python3` or `py`, replace every `python` above and below with
+   that command. Using `-m pip` binds installation to the selected interpreter.
+5. For game-package extraction, provide your own `prod.keys` in the application
+   folder or `%USERPROFILE%\.switch\prod.keys`. Key files are not supplied by
+   this compatibility fix. They are not needed to decode a standalone NSO main.
+6. Launch from the application folder:
+
+   ```bat
+   python __main__.py
+   ```
+
+For future launches, repeat the launch command from that folder. Installing into
+one Python and launching with another (including an unconfigured `.venv`) causes
+errors such as `ModuleNotFoundError: No module named 'capstone'`.
+
+#### Build an EXE (optional)
+
+From the same application folder, using the same Python:
+
+```bat
+python -m PyInstaller -F -w -i xcw.ico __main__.py --collect-all zbic
+```
+
+UPX is optional; add `--upx-dir your_upx_root_dir` if you use it. Building an EXE
+is separate from running the source. This change does not claim a validated
+packaged release.
+
+#### Run the regression tests
+
+From the repository root, one level above the application folder:
+
+```bat
+python -m pip install -r "Interactive ASM Cheats Updater/requirements.txt" -r requirements-dev.txt
+python -m unittest discover -s tests -v
+```
+
+Tests generate synthetic NSOs and dummy keys only. They do not load private keys
+or games. A real-game cheat migration and encrypted package extraction still
+require separate validation.
 
 
 ## Trouble Shooting
@@ -180,3 +231,29 @@ This project is licensed under GNU General Public License v3.0.
 <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><image src="http://www.gnu.org/graphics/gplv3-127x51.png" align="right"></a>
 
 Refer the [LICENSE](LICENSE) file for more details.
+
+
+## Changelog
+
+### v1.1.4 - Unofficial compatibility fixes (2026-10-19)
+
+- Add bounded in-memory decoding for raw, legacy LZ4 and ZBIC NSO0 segments,
+  including mixed compressed/uncompressed segments. Opening a main preserves
+  the original file, Build ID, segment memory addresses, module name and BSS.
+- Fix compression detection: only the three segment compression bits indicate
+  compression; hash-only flags do not.
+- Save modified mains as uncompressed NSO0 with refreshed checked segment hashes.
+  Loading and saving no longer require `nsnsotool.exe`. ELF is not a main input;
+  from nso2elf, use the file created by `--export-uncompressed`.
+- Require `nsz>=5.0.0,<6`, which recognizes `master_key_14` and `master_key_15`
+  checksums. Missing keys and incorrect checksums remain errors. Later key
+  generations are not covered by this fix's validation.
+- Select keys consistently: app `prod.keys`, then `~/.switch/prod.keys`, then
+  legacy app `keys.txt`. The extractor and NSZ use the same selection, with
+  canonical key names and cleared state between loads.
+- Add English global-Python installation instructions, including `python`,
+  `python3` and `py`, and Windows Python 3.9/3.12 regression-test CI.
+
+The decoder is adapted from [HY-Leung/nso2elf](https://github.com/HY-Leung/nso2elf)
+with its MIT notice retained in `licenses/nso2elf-MIT.txt`. This project remains
+GPL-3.0. Original project: [zzpong/Interactive-ASM-Cheats-Updater](https://github.com/zzpong/Interactive-ASM-Cheats-Updater).

@@ -1,0 +1,2 @@
+# Independent LZ4 encoder used to build codec fixtures.
+lz4>=4.3,<5

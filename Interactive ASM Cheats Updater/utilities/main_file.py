@@ -1,10 +1,10 @@
-import os, json, shutil, time, subprocess, chardet
+import os, json, chardet
 from copy import deepcopy
 from tkinter import messagebox
 from typing import Optional
-from asyncio.subprocess import PIPE, STDOUT
 
 from utilities.exception import MainNSOError
+from utilities.nso_codec import read_nso, decompress_nso, refresh_hashes, ConversionError
 
 
 def bytearray_slice(bytearray, loc, byteorderbig = False):
@@ -49,38 +49,24 @@ class MainNSOStruct:
         if not self.is_NSO_file():
             raise MainNSOError(generate_msg(self.msg_map['NOT NSO File']))
         else:
-            if self.is_Compressed():
-                self.decompress()
-            self.get_struct_from_file()
+            self.get_struct_from_file(self.decompress())
             self.get_mainfunc_file()
 
             return True
 
     def decompress(self):
-        file_name = os.path.basename(self.file_path)
-        if not os.path.exists(self.back_path):
-            os.makedirs(self.back_path)
-       
-        back_file_path = os.path.join(self.back_path, f'{file_name}_❀{int(time.time())}.bak')
-        shutil.copyfile(self.file_path, back_file_path)
-        if not os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
-            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool missing']))
-            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool missing'])))
-
+        # Work on a copy in memory; opening a user's main must not overwrite it.
         try:
-            process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-            commands = ('cd tools\n'
-                        f'nsnsotool "{self.file_path}"\n'
-                    )
-            outs, errs = process.communicate(commands.encode('utf-8'))
-            content = self.decode_outs_from_system(outs)
-            if content is not None:
-                print(*content, sep="\n")
-        except Exception as e:
-            messagebox.showerror(title='Error', message=generate_msg(self.msg_map['nsnsotool warning']))
-            raise MainNSOError(MainNSOError(generate_msg(self.msg_map['nsnsotool warning'])))
-        
-        self.logger.info(generate_msg(self.msg_map['NSO file decompressed']))
+            raw = read_nso(self.file_path)
+            decoded = decompress_nso(raw)
+        except (OSError, ConversionError) as exc:
+            raise MainNSOError(str(exc)) from exc
+        if int.from_bytes(raw[12:16], 'little') & 7:
+            self.logger.info(generate_msg(self.msg_map['NSO file decompressed']))
+        return decoded
+
+    def export_bytes(self):
+        return refresh_hashes(self.NSORaw4Mod)
 
     def decode_outs_from_system(self, outs):
         encode_type = chardet.detect(outs)['encoding']
@@ -97,10 +83,8 @@ class MainNSOStruct:
 
         return contents
 
-    def get_struct_from_file(self):
-        buf = bytearray(os.path.getsize(self.file_path))
-        with open(self.file_path, 'rb') as fp:
-            fp.readinto(buf)
+    def get_struct_from_file(self, raw=None):
+        buf = bytearray(read_nso(self.file_path) if raw is None else raw)
         self.NSORaw = buf
         self.NSORaw4Mod = deepcopy(self.NSORaw)
 
@@ -132,19 +116,18 @@ class MainNSOStruct:
             self.mainFuncFile = self.NSORaw[bytes_to_int(self.textFileOffset) : bytes_to_int(self.textFileEnd)]
 
     def is_NSO_file(self):
-        buf = bytearray(os.path.getsize(self.file_path))
         with open(self.file_path, 'rb') as fp:
-            fp.readinto(buf)
-        self.Magic = bytearray_slice(buf, 0, byteorderbig = False).decode('unicode_escape')
-        return self.Magic == 'NSO0'
+            magic = fp.read(4)
+        self.Magic = magic.decode('ascii', errors='replace')
+        return magic == b'NSO0'
 
     def is_Compressed(self):
-        buf = bytearray(os.path.getsize(self.file_path))
         with open(self.file_path, 'rb') as fp:
-            fp.readinto(buf)
-        self.Flags = bytearray_slice(buf, 3, byteorderbig = False)
-        return sum(self.Flags) != 0
-    
+            fp.seek(12)
+            self.Flags = bytearray(fp.read(4))
+        # Hash/codec flags do not mean a segment is compressed.
+        return bool(int.from_bytes(self.Flags, 'little') & 7)
+
     def is_main_addr(self, addr):
         return addr in range(bytes_to_int(self.textFileOffset), bytes_to_int(self.textFileEnd))
 

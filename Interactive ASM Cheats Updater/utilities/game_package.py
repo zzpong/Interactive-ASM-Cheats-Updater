@@ -9,28 +9,36 @@ from struct import unpack
 from os import listdir
 from utilities.aes128 import AESECB,AESXTS,AESCTR
 from utilities.exception import GamePackageError
+from utilities.key_file import select_key_file, read_keys
 
 
 class GamePackage:
     def __init__(self, globalInfo):
         self.key_path = globalInfo.root_path
+        self.logger = globalInfo.logger
         self.msg_map = globalInfo.msg_map
         self.keys = self.get_keys()
 
     def get_keys(self):
-        keys = {}
-        key_file = Path(os.path.join(self.key_path, 'keys.txt'))
-        if not key_file.is_file():
-            key_file = Path.home().joinpath('.switch', 'prod.keys')
-        if not key_file.is_file():
-            messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['request keys'])))
-            raise GamePackageError('Keys not found!')
-        with open(key_file, encoding="utf8") as f:
-            for line in f.readlines():
-                pattern = re.match('\s*([a-z0-9_]+)\s*=\s*([A-F0-9]+)\s*', line, re.I)
-                if pattern:
-                    keys[pattern.group(1)] = bytes.fromhex(pattern.group(2))
-        return keys
+        try:
+            self.key_file = select_key_file(self.key_path)
+            return read_keys(self.key_file)
+        except (OSError, ValueError) as exc:
+            raise GamePackageError(str(exc)) from exc
+
+    def load_nsz_keys(self):
+        # The NSZ parser and our extractor must use the same selected file.
+        from nsz.nut import Keys
+        # Seed canonical names from the same parser as our extractor. NSZ's
+        # reader does not normalize case or a UTF-8 BOM; keep keys in memory.
+        self.keys = read_keys(self.key_file)
+        Keys.keys.clear()
+        Keys.keys.update({name: value.hex() for name, value in self.keys.items()})
+        Keys.titleKeks.clear()
+        Keys.keyAreaKeys.clear()
+        Keys.keys_loaded = False
+        if not Keys.load(str(self.key_file)):
+            raise GamePackageError('NSZ could not validate the selected keys file')
 
     def find_largest_file(self, path) -> str:
         largest_file = {'name': None, 'size': 0}
@@ -251,6 +259,7 @@ class GamePackage:
         
         game_path_str = str(game_path)
         out_folder = game_path.parent.absolute().joinpath(game_path.stem)
+        self.load_nsz_keys()
         container = factory(game_path)
         container.open(game_path_str, 'rb')
         print('\n'.join(eval(self.msg_map['Extract NCA'])))

@@ -1,4 +1,3 @@
-from asyncio.subprocess import PIPE, STDOUT
 import tkinter, os, base64, webbrowser, re, time, json, sys
 from tkinter import dialog
 from copy import deepcopy
@@ -1504,22 +1503,9 @@ class CodeUpdaterInterface:
                 self.new_main_file.modify(code_chunk['processed']['allocated_addr'], bytes_content, in_code_cave = code_chunk['contents']['in_code_cave'])
 
         if file_path != '':
+            saved_bytes = self.new_main_file.export_bytes()
             with open(file = file_path, mode = 'wb') as file:
                 file.seek(0)
                 file.truncate()
-                file.write(self.new_main_file.NSORaw4Mod)
+                file.write(saved_bytes)
                 messagebox.showinfo(title='Info', message='\n'.join(eval(self.msg_map['NSO File Saved'])))
-            
-            try:
-                if os.path.exists(os.path.join(self.tool_path, 'nsnsotool.exe')):
-                    process = subprocess.Popen(["cmd"], shell=False, close_fds=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-                    commands = ('cd tools\n'
-                                f'nsnsotool "{file_path}"\n'
-                            )
-                    process.communicate(commands.encode('utf-8'))
-                else:
-                    messagebox.showerror(title='Error', message='\n'.join(eval(self.msg_map['nsnsotool missing'])))
-
-            except Exception as e:
-                messagebox.showwarning(title='Warning', message='\n'.join(eval(self.msg_map['nsnsotool warning'])))
-                self.logger.exception(e)  
